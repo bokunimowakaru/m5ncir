@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 02: NICR MLX90614 OBJ for M5Stack
+Example 02: NCIR MLX90614 Object Temperature Meter for M5Stack
 ・非接触温度センサ の読み値をアナログ・メータ表示します
 ・あらかじめ設定した距離と対象物の面積に応じて測定結果を換算します
 ・Melexis; Microelectronic Integrated Systems, Infra Red Thermometer
@@ -27,24 +27,22 @@ MLX90614
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
 #ifndef PI
-  #define PI 3.1415927                          // 円周率
+    #define PI 3.1415927                        // 円周率
 #endif
-#define FOV 90                                  // センサの半値角(MLX90614xAA)
-float Dist = 100;                               // 測定対象までの距離(mm)
+#define FOV 90. * 0.7                           // センサの半値角×補正係数
+float Dist = 200;                               // 測定対象までの距離(mm)
 float Area = 70. * 61. * PI;                    // 測定対象の面積(mm2)
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
     Wire.beginTransmission(0x5A);               // MLX90614(0x5A)との通信を開始
     Wire.write(reg);                            // レジスタ番号を指定
-    if(Wire.endTransmission(false)==0){         // MLX90614(0x5A)との通信を継続
-        Wire.requestFrom(0x5A, 2);              // 2バイトのデータを要求
-        if(Wire.available() >= 2){              // 2バイト以上を受信
-            val = (int16_t)Wire.read();         // 1バイト目を変数tempの下位へ
-            val |= ((int16_t)Wire.read()) << 8; // 2バイト目を変数tempの上位へ
-        }
+    Wire.endTransmission(false);                // MLX90614(0x5A)との通信を継続
+    Wire.requestFrom(0x5A, 2);                  // 2バイトのデータを要求
+    if(Wire.available() >= 2){                  // 2バイト以上受信(機能しない)
+        val = (int16_t)Wire.read();             // 1バイト目を変数tempの下位へ
+        val |= ((int16_t)Wire.read()) << 8;     // 2バイト目を変数tempの上位へ
     }
-    Wire.endTransmission(true);                 // MLX90614(0x5A)との通信を終了
     return (float)val * 0.02 - 273.15;          // 温度に変換して応答
 }
 
@@ -52,17 +50,26 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC", "NICR", 0, 40);     // メータのレンジおよび表示設定
+    analogMeterInit("degC", "NCIR", 0, 40);     // メータのレンジおよび表示設定
+    M5.Lcd.print("Example 02: Object Temperature Meter"); // タイトル表示
 }
 
+int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 void loop(){                                    // 繰り返し実行する関数
     float Tenv= getTemp(6);                     // センサの環境温度を取得
     float Tsen= getTemp();                      // センサの測定温度を取得
-    float Ssen= pow(Dist * tan((float)FOV / 360. * PI), 2.) * PI;   // 測定面積
-    float Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;                // 測定結果
-    Serial.printf("Tenv=%.2f, ",Tenv);
-    Serial.printf("Tsen=%.2f(%.0fcm2), ",Tsen, Ssen / 100);
-    Serial.printf("Tobj=%.2f(%.0fcm2)\n",Tobj, Area / 100);
+    float Ssen= pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // 測定地点の面積
+    float Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;        // 面積による補正
+    M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
+    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    M5.Lcd.printf("Tenv=%.2f, ",Tenv);                      // 環境温度を表示
+//  Serial.printf("Tenv=%.2f, ",Tenv);                      // 環境温度を出力
+    M5.Lcd.printf("Tsen=%.2f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を表示
+//  Serial.printf("Tsen=%.2f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を出力
+    M5.Lcd.printf("Tobj=%.2f(%.0fcm2)"  ,Tobj, Area / 100); // 物体温度を表示
+//  Serial.printf("Tobj=%.2f(%.0fcm2)\n",Tobj, Area / 100); // 物体温度を出力
+    lcd_row++;                                  // 行数に1を加算する
+    if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
     analogMeterNeedle(Tobj);                    // 温度値をメータ表示
     delay(100);                                 // 0.1秒（100ms）の待ち時間処理
 }
