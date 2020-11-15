@@ -31,9 +31,10 @@ TOF STMicroelectronics VL53L0X
 #ifndef PI
     #define PI 3.1415927                        // 円周率
 #endif
-#define FOV 90. * 0.7                           // センサの半値角×補正係数
+#define FOV 90.                                 // センサの半値角×補正係数
 float Dist = 200;                               // 測定対象までの距離(mm)
 float Area = 70. * 61. * PI;                    // 測定対象の面積(mm2)
+float Fact = FOV * 0.7;                         // 補正係数
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
@@ -59,28 +60,28 @@ void setup(){                                   // 起動時に一度だけ実�
 
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 void loop(){                                    // 繰り返し実行する関数
+    delay(100);                                 // 0.1秒（100ms）の待ち時間処理
+    Dist = (float)VL53L0X_get();                // 測距センサVL53L0Xから距離取得
+    if(Dist <= 20. || Dist > 8000) return;      // 20mm以下/8000mm超のときに戻る
     float Tenv= getTemp(6);                     // センサの環境温度を取得
     if(Tenv < 0) return;                        // 0℃未満のときは先頭に戻る
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tsen < 0) return;                        // 0℃未満のときは先頭に戻る
-    Dist = (float)VL53L0X_get();                // 測距センサVL53L0Xから距離取得
-    if(Dist <= 20. || Dist >= 500) return;      // 20mm未満500mm以上のときに戻る
-    float Ssen= pow(Dist * tan(FOV / 360. * PI), 2.) * PI;      // 測定点の面積
+    float Ssen= pow(Dist * tan(Fact / 360. * PI), 2.) * PI;     // 測定点の面積
     float Tobj = Tsen;                                          // 温度測定結果
     if(Area < Ssen) Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;  // 面積比で補正
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
     M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
     M5.Lcd.printf("%.0fcm, ",Dist/10);                    // 測距結果を表示
-    Serial.printf("%.1fcm, ",Dist/10);                    // 測距結果を出力
+//  Serial.printf("%.1fcm, ",Dist/10);                    // 測距結果を出力
     M5.Lcd.printf("Te=%.1f, ",Tenv);                      // 環境温度を表示
-    Serial.printf("Te=%.2f, ",Tenv);                      // 環境温度を出力
+//  Serial.printf("Te=%.2f, ",Tenv);                      // 環境温度を出力
     M5.Lcd.printf("Ts=%.1f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を表示
-    Serial.printf("Ts=%.2f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を出力
+//  Serial.printf("Ts=%.2f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を出力
     M5.Lcd.printf("To=%.1f(%.0fcm2)"  ,Tobj, Area / 100); // 物体温度を表示
-    Serial.printf("To=%.2f(%.0fcm2)\n",Tobj, Area / 100); // 物体温度を出力
+//  Serial.printf("To=%.2f(%.0fcm2)\n",Tobj, Area / 100); // 物体温度を出力
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
     analogMeterNeedle(Tobj);                    // 温度値をメータ表示
-    delay(100);                                 // 0.1秒（100ms）の待ち時間処理
 }
