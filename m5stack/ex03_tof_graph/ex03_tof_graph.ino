@@ -41,7 +41,7 @@ char bmpfile[10] = "/ncir.bmp";
 void printTitle(){
     M5.Lcd.fillRect(0, 21 * 8, 320, 8, 0);      // 描画位置の文字を消去(0=黒)
     M5.Lcd.setCursor(0, 21 * 8);                // 液晶描画位置をlcd_row行目に
-    M5.Lcd.print("Example 03: Object Temperature Meter [NCIR][ToF][Graph]");
+    M5.Lcd.print("Example 03: Object Temperature Meter [ToF][Graph]");
 }
 
 float getTemp(byte reg = 0x7){
@@ -100,6 +100,14 @@ void loop(){                                    // 繰り返し実行する関�
         analogMeterInit("cm", "ToF", 0, 400);   // メータのレンジおよび表示設定
         printTitle();
     }
+    if(mode == 3 && M5.BtnC.read()){
+        delay(1000);
+        if(M5.BtnC.read()){
+            beep(880);                  // スピーカ出力 880Hzの音を出力
+            bmpScreenServer(bmpfile);   // スクリーンショットを保存
+            beep(1047);                 // スピーカ出力 1047Hzの音を出力
+        }
+    }
     if(M5.BtnC.wasPressed() && mode != 3){      // ボタンCが押された時
         mode = 3; beep(880);                    // モード2(距離測定)に設定
         M5.Lcd.fillScreen(BLACK);               // LCDを消去
@@ -125,7 +133,6 @@ void loop(){                                    // 繰り返し実行する関�
     switch(mode){
       case 1:   /* 非接触温度測定表示 */
         M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
-        M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
         M5.Lcd.printf("%.0fcm, ",Dist/10);                    // 測距結果を表示
         Serial.printf("%.1fcm, ",Dist/10);                    // 測距結果を出力
         M5.Lcd.printf("Te=%.1f, ",Tenv);                      // 環境温度を表示
@@ -138,33 +145,24 @@ void loop(){                                    // 繰り返し実行する関�
         break;
       case 2:     /* 距離メータ風表示 */
         M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
-        M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0);     // 描画位置の文字を消去(0=黒)
         M5.Lcd.printf("%.1fcm  ",Dist/10);              // 測距結果を表示
         Serial.printf("%.1fcm\n",Dist/10);              // 測距結果を出力
         analogMeterNeedle(Dist/10);                     // 距離をメータ表示
         break;
       case 3:     /* 温度vs距離グラフ表示 */
         int x = (int)(Dist * 320. / 800.);              // 最大値=800mm
-        M5.Lcd.drawPixel(x, temp2yaxis(Tenv), GREEN);   // 環境温度
-        M5.Lcd.drawPixel(x, temp2yaxis(Tsen), RED);     // 測定温度
+        M5.Lcd.drawPixel(x, temp2yaxis(Tsen), GREEN);   // 測定温度
         M5.Lcd.drawPixel(x, temp2yaxis(Tobj), WHITE);   // 物体温度
-        File file = SD.open(csvfile, FILE_WRITE);
+        File file = SD.open(csvfile, "a");
         if(file){
             char s[256];
             snprintf(s, 256, "%.1f, %.2f, %.2f, %.2f\n", Dist, Tenv, Tsen, Tobj);
             file.print(s);
             file.close();
         }
-        if(M5.BtnC.read()){
-            delay(1000);
-            if(M5.BtnC.read()){
-                beep(440);                  // スピーカ出力 440Hzの音を出力
-                bmpScreenServer(bmpfile);   // スクリーンショットを保存
-                beep(440);                  // スピーカ出力 440Hzの音を出力
-            }
-        }
         break;
     }
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
+    if(mode != 2) M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }

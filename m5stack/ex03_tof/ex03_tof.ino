@@ -72,7 +72,6 @@ void loop(){                                    // 繰り返し実行する関�
     if(Area < Ssen) Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;  // 面積比で補正
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
-    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
     M5.Lcd.printf("%.0fcm, ",Dist/10);                    // 測距結果を表示
 //  Serial.printf("%.1fcm, ",Dist/10);                    // 測距結果を出力
     M5.Lcd.printf("Te=%.1f, ",Tenv);                      // 環境温度を表示
@@ -81,7 +80,8 @@ void loop(){                                    // 繰り返し実行する関�
 //  Serial.printf("Ts=%.2f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を出力
     M5.Lcd.printf("To=%.1f(%.0fcm2)"  ,Tobj, Area / 100); // 物体温度を表示
 //  Serial.printf("To=%.2f(%.0fcm2)\n",Tobj, Area / 100); // 物体温度を出力
+    analogMeterNeedle(Tobj);                    // 温度値をメータ表示
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    analogMeterNeedle(Tobj);                    // 温度値をメータ表示
+    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }
