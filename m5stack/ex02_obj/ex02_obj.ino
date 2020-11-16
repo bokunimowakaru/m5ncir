@@ -31,8 +31,7 @@ MLX90614
 #endif
 #define FOV 90.                                 // センサの半値角×補正係数
 float Dist = 200;                               // 測定対象までの距離(mm)
-float Area = 70. * 61. * PI;                    // 測定対象の面積(mm2)
-float Fact = FOV * 0.7;                         // 補正係数
+float Area = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
@@ -59,7 +58,7 @@ int lcd_row = 22;                               // 液晶画面上の行数保�
 void loop(){                                    // 繰り返し実行する関数
     float Tenv= getTemp(6);                     // センサの環境温度を取得
     float Tsen= getTemp();                      // センサの測定温度を取得
-    float Ssen= pow(Dist * tan(Fact / 360. * PI), 2.) * PI; // 測定地点の面積
+    float Ssen= pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // 測定地点の面積
     float Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;        // 面積による補正
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
     M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)

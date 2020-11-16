@@ -33,8 +33,7 @@ TOF STMicroelectronics VL53L0X
 #endif
 #define FOV 90.                                 // センサの半値角×補正係数
 float Dist = 200;                               // 測定対象までの距離(mm)
-float Area = 70. * 61. * PI;                    // 測定対象の面積(mm2)
-float Fact = FOV * 0.7;                         // 補正係数
+float Area = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
@@ -67,7 +66,7 @@ void loop(){                                    // 繰り返し実行する関�
     if(Tenv < 0) return;                        // 0℃未満のときは先頭に戻る
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tsen < 0) return;                        // 0℃未満のときは先頭に戻る
-    float Ssen= pow(Dist * tan(Fact / 360. * PI), 2.) * PI;     // 測定点の面積
+    float Ssen= pow(Dist * tan(FOV / 360. * PI), 2.) * PI;      // 測定点の面積
     float Tobj = Tsen;                                          // 温度測定結果
     if(Area < Ssen) Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;  // 面積比で補正
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る

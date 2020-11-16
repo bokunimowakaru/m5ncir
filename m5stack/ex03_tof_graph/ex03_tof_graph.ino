@@ -33,8 +33,7 @@ TOF STMicroelectronics VL53L0X
 #endif
 #define FOV 90.                                 // センサの半値角×補正係数
 float Dist = 200;                               // 測定対象までの距離(mm)
-float Area = 70. * 61. * PI;                    // 測定対象の面積(mm2)
-float Fact = FOV * 0.5;                         // 補正係数
+float Area = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 char csvfile[10] = "/ncir.csv";
 char bmpfile[10] = "/ncir.bmp";
 
@@ -64,6 +63,11 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
     analogMeterInit("degC", "NCIR", 0, 40);     // メータのレンジおよび表示設定
     printTitle();
+    File file = SD.open(csvfile, "w");
+    if(file){
+        file.print("Dist, Tenv, Tsen, Tobj\n");
+        file.close();
+    }
 }
 
 void beep(int freq){
@@ -73,10 +77,9 @@ void beep(int freq){
     M5.Speaker.end();           // スピーカ出力を停止する
 }
 
-int temp2yaxis(float temp){                     // 温度値を y軸の値（232～0）に
+int temp2yaxis(float temp, float min = 20., float max = 40.){
+	// 温度値を y軸の値（232～0）に
     int y;
-    float min = 20.; // ℃
-    float max = 40.; // ℃
     if(temp < min) return 232;
     if(temp > max) return 0;
     return 232 - (int)(232. * (temp - min) / (max - min) + .5);
@@ -114,6 +117,7 @@ void loop(){                                    // 繰り返し実行する関�
         M5.Lcd.drawRect(0, 0, 320, 232, BLUE);  // 座標0,0から320x234の箱を描画
         for(int y = 0; y < 231; y += 29) M5.Lcd.drawLine(0,y,319,y, BLUE);
         for(int x = 0; x < 319; x += 40) M5.Lcd.drawLine(x,0,x,231, BLUE);
+        M5.Lcd.drawLine(0,203,319,203, RED);
     }
     /* 測定部 */
     Dist = (float)VL53L0X_get();                // 測距センサVL53L0Xから距離取得
@@ -124,7 +128,7 @@ void loop(){                                    // 繰り返し実行する関�
         if(Tenv < 0) return;                    // 0℃未満のときは先頭に戻る
         Tsen= getTemp();                        // センサの測定温度を取得
         if(Tsen < 0) return;                    // 0℃未満のときは先頭に戻る
-        Ssen= pow(Dist * tan(Fact / 360. * PI), 2.) * PI;     // 測定点の面積
+        Ssen= pow(Dist * tan(FOV / 360. * PI), 2.) * PI;      // 測定点の面積
         Tobj = Tsen;                                          // 温度測定結果
         if(Area < Ssen) Tobj = (Tsen - Tenv) * Ssen / Area + Tenv;  // 面積比で補正
         if(Tobj < 0. || Tobj > 99.) return;     // 0℃未満/99℃超過時は戻る
@@ -150,9 +154,12 @@ void loop(){                                    // 繰り返し実行する関�
         analogMeterNeedle(Dist/10);                     // 距離をメータ表示
         break;
       case 3:     /* 温度vs距離グラフ表示 */
-        int x = (int)(Dist * 320. / 800.);              // 最大値=800mm
-        M5.Lcd.drawPixel(x, temp2yaxis(Tsen), GREEN);   // 測定温度
-        M5.Lcd.drawPixel(x, temp2yaxis(Tobj), WHITE);   // 物体温度
+        int x = (int)(Dist * 320. / 400.);              // 最大値=400mm
+        M5.Lcd.drawPixel(x, temp2yaxis(Tsen-Tenv,-2,14), GREEN);     // 測定温度
+        int color = WHITE;
+        if(Tsen - Tenv < 1.0) color =RED;
+        M5.Lcd.drawPixel(x, temp2yaxis(Tobj-Tenv,-2,14), color);     // 物体温度
+        
         File file = SD.open(csvfile, "a");
         if(file){
             char s[256];
@@ -164,5 +171,5 @@ void loop(){                                    // 繰り返し実行する関�
     }
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    if(mode != 2) M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    if(mode != 3) M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }
