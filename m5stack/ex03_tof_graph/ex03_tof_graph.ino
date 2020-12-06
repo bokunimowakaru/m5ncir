@@ -177,7 +177,7 @@ void loop(){                                    // 繰り返し実行する関�
             M5.Lcd.drawRect(0, 0, 320, 225, NAVY);  // 座標0,0から320x224の箱を描画
             for(int y = 0; y < 224; y += 28) M5.Lcd.drawLine(0,y,319,y, NAVY);
             for(int x = 0; x < 319; x += 40) M5.Lcd.drawLine(x,0,x,223, NAVY);
-            M5.Lcd.drawLine(0,196,319,196, RED);
+            M5.Lcd.drawLine(0,168,319,168, RED);
             printMenu();
         }
     }
@@ -230,10 +230,10 @@ void loop(){                                    // 繰り返し実行する関�
             return;
     }
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
-    if(mode != 2) M5.Lcd.printf("%.0fcm, ",Dist/10);          // 測距結果を表示
-    if(mode != 3) M5.Lcd.printf("Te=%.1f, ",Tenv);            // 環境温度を表示
-    if(mode != 3) M5.Lcd.printf("Ts=%.1f, ",Tsen);            // 測定温度を表示
-    if(mode == 1) M5.Lcd.printf("To=%.1f"  ,Tobj);            // 物体温度を表示
+    if(mode != 2) M5.Lcd.printf("%.0fcm ",Dist/10);          // 測距結果を表示
+    if(mode != 3) M5.Lcd.printf("Te=%.1f ",Tenv);            // 環境温度を表示
+    if(mode != 3) M5.Lcd.printf("Ts=%.1f ",Tsen);            // 測定温度を表示
+    if(mode == 1) M5.Lcd.printf("To=%.1f ",Tobj);            // 物体温度を表示
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 27) lcd_row = 22;              // 最下行まで来たら先頭行へ
     M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
