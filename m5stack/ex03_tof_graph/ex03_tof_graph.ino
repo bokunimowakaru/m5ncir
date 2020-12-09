@@ -1,7 +1,7 @@
 /*******************************************************************************
 Example 03: NCIR MLX90614 & TOF Human Body Temperature Meter for M5Stack
 ・非接触温度センサ の読み値をアナログ・メータ表示します
-・測距センサを使って測定対象までの距離を求め、温度値を補正します。
+・測距センサを使って顔までの距離を求め、体温を算出します。
 ・Melexis; Microelectronic Integrated Systems, Infra Red Thermometer
 
                                           Copyright (c) 2019-2020 Wataru KUNINO
@@ -28,9 +28,6 @@ TOF STMicroelectronics VL53L0X
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
-#ifndef PI
-    #define PI 3.1415927                        // 円周率
-#endif
 #define BEEP 0                                  // ビープ音
 #define ChartYmax 12                            // グラフ最大値
 #define ChartYmin -4                            // グラフ最小値
@@ -58,7 +55,7 @@ void printMenu(){
 void printTitle(){
     M5.Lcd.fillRect(0, 21 * 8, 320, 8, 0);      // 描画位置の文字を消去(0=黒)
     M5.Lcd.setCursor(0, 21 * 8, 1);             // 液晶描画位置をlcd_row行目に
-    M5.Lcd.print("Example 03: Object Temperature Meter [ToF][Graph]");
+    M5.Lcd.print("Example 03: Body Temperature Meter [ToF][Graph]");
     printMenu();
 }
 
