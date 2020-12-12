@@ -12,7 +12,7 @@ Example 03: NCIR MLX90614 & TOF Human Body Temperature Meter for M5Stack
 　M5Stack Time-of-Flight Distance Ranging Sensor Unit
 　STMicroelectronics VL53L0X; Time-of-Flight ranging sensor
 
-                                          Copyright (c) 2019-2020 Wataru KUNINO
+                                          Copyright (c) 2020-2021 Wataru KUNINO
 ********************************************************************************
 【参考文献】
 

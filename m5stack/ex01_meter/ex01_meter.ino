@@ -7,7 +7,7 @@ Example 01: NCIR MLX90614 Temperature Meter for M5Stack
 　M5Stack NCIR Non-Contact Infrared Thermometer Sensor Unit
 　Melexis MLX90614; Microelectronic Integrated Systems, Infra Red Thermometer
 
-                                          Copyright (c) 2019-2020 Wataru KUNINO
+                                          Copyright (c) 2020-2021 Wataru KUNINO
 ********************************************************************************
 【参考文献】
 

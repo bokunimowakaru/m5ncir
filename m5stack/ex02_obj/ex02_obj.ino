@@ -1,14 +1,15 @@
 /*******************************************************************************
-Example 02: NCIR MLX90614 Human Body Temperature Meter for M5Stack
+Example 02: NCIR MLX90614 Human Face Distance Meter for M5Stack
 
-・非接触温度センサ の読み値を体温に変換し、アナログ・メータ表示します。
+・非接触温度センサ の読み値から顔までの距離を求めます。
 ・あらかじめ設定した距離と対象物の面積、顔温度との差分値で補正します。
+・体温を36℃としたときにの顔までの距離を逆算します。
 
 ・対応する非接触温度センサ：
 　M5Stack NCIR Non-Contact Infrared Thermometer Sensor Unit
 　Melexis MLX90614; Microelectronic Integrated Systems, Infra Red Thermometer
 
-                                          Copyright (c) 2019-2020 Wataru KUNINO
+                                          Copyright (c) 2020-2021 Wataru KUNINO
 ********************************************************************************
 【参考文献】
 
@@ -52,8 +53,8 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC","Face Area",30,40);  // メータのレンジおよび表示設定
-    M5.Lcd.print("Example 02: Object Temperature Meter"); // タイトル表示
+    analogMeterInit("cm","Face Dist", 0, 40);   // メータのレンジおよび表示設定
+    M5.Lcd.print("Example 02: Object Distance Meter"); // タイトル表示
 }
 
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
@@ -63,19 +64,27 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
 
-    // 面積換算方式
     // 体温Tobj = 環境温度 + センサ温度差値×√(センサ測定面積÷測定対象面積)
     float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
     float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
+    
+    // 距離の逆算（体温36℃ の人の顔までの距離cDistを上式から逆算する）
+    float cSsen = Sobj * pow((36. - Tenv - TempOfsAra) / (Tsen - Tenv), 2.);
+    float cDist = sqrt(cSsen / PI) / tan(FOV / 360. * PI);
+    
 //  Serial.printf("Tenv=%.2f, ",Tenv);                      // 環境温度を出力
 //  Serial.printf("Tsen=%.2f(%.0fcm2), ",Tsen, Ssen / 100); // 測定温度を出力
-//  Serial.printf("Tobj=%.2f(%.0fcm2)\n",Tobj, Sobj / 100); // 物体温度を出力
+//  Serial.printf("Tobj=%.2f(%.0fcm2), ",Tobj, Sobj / 100); // 物体温度を出力
+//  Serial.printf("Dist=%.2f\n",cDist / 10);    // 物体(逆算)距離を出力
+
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
     M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
-    M5.Lcd.printf("Tenv=%.2f ",Tenv);                       // 環境温度を表示
-    M5.Lcd.printf("Tsen=%.2f(%.0fcm2) ",Tsen, Ssen / 100);  // 測定温度を表示
-    M5.Lcd.printf("Tobj=%.2f(%.0fcm2) ",Tobj, Sobj / 100);  // 物体温度を表示
+    M5.Lcd.printf("Tenv=%.1f ",Tenv);                       // 環境温度を表示
+    M5.Lcd.printf("Tsen=%.1f ",Tsen);           // 測定温度を表示
+    M5.Lcd.printf("Tobj=%.1f ",Tobj);           // 物体温度を表示
+    M5.Lcd.printf("Dist=%.0f cm ",cDist / 10);  // 物体(逆算)距離を表示
+
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    analogMeterNeedle(Tobj);                    // 温度値をメータ表示
+    analogMeterNeedle(cDist / 10);              // 物体(逆算)距離をメータ表示
 }
