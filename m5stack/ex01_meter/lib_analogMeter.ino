@@ -156,12 +156,25 @@ void analogMeterInit()
       // Calculate label positions
       x0 = sx * (M_SIZE*100 + tl + 10) + M_SIZE*120;
       y0 = sy * (M_SIZE*100 + tl + 10) + M_SIZE*140;
+      String S;
+      float val;
       switch (i / 25) {
-        case -2: M5.Lcd.drawCentreString(String(analogMeterMinVal), x0, y0 - 12, 2); break;
-        case -1: M5.Lcd.drawCentreString(String((analogMeterMinVal*3+analogMeterMaxVal)/4), x0, y0 - 9, 2); break;
-        case 0: M5.Lcd.drawCentreString(String((analogMeterMinVal+analogMeterMaxVal)/2), x0, y0 - 7, 2); break;
-        case 1: M5.Lcd.drawCentreString(String((analogMeterMinVal+analogMeterMaxVal*3)/4), x0, y0 - 9, 2); break;
-        case 2: M5.Lcd.drawCentreString(String(analogMeterMaxVal), x0, y0 - 12, 2); break;
+        case -2:
+            M5.Lcd.drawCentreString(String(analogMeterMinVal), x0, y0 - 12, 2); break;
+        case -1:
+            val = ((float)analogMeterMinVal * 3 + (float)analogMeterMaxVal) / 4;
+            if(((int)(val * 10.)) % 10 == 0) S = String(val, 0); else S = String(val, 1);
+            M5.Lcd.drawCentreString(S, x0, y0 - 9, 2); break;
+        case 0:
+            val = ((float)analogMeterMinVal + (float)analogMeterMaxVal) / 2;
+            if(((int)(val * 10.)) % 10 == 0) S = String(val, 0); else S = String(val, 1);
+            M5.Lcd.drawCentreString(S, x0, y0 - 7, 2); break;
+        case 1:
+            val = ((float)analogMeterMinVal + (float)analogMeterMaxVal * 3) / 4;
+            if(((int)(val * 10.)) % 10 == 0) S = String(val, 0); else S = String(val, 1);
+            M5.Lcd.drawCentreString(S, x0, y0 - 9, 2); break;
+        case 2:
+            M5.Lcd.drawCentreString(String(analogMeterMaxVal), x0, y0 - 12, 2); break;
       }
     }
 
@@ -226,7 +239,7 @@ void analogMeterNeedle(float value_f, byte ms_delay)
 
   float delta = (float)(analogMeterMaxVal - analogMeterMinVal);
   if( delta != 0.){
-	value_f = ( value_f - (float)analogMeterMinVal ) * 100 / delta;
+    value_f = ( value_f - (float)analogMeterMinVal ) * 100 / delta;
   }
   int value;
   if(value_f > 0. ) value = (int)(value_f + 0.5);
@@ -281,5 +294,5 @@ void analogMeterNeedle(float value_f, byte ms_delay)
 }
 
 void analogMeterNeedle(float value){
-	analogMeterNeedle(value, 5);
+    analogMeterNeedle(value, 5);
 }

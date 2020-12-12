@@ -1,7 +1,11 @@
 /*******************************************************************************
 Example 01: NCIR MLX90614 Temperature Meter for M5Stack
-・非接触温度センサ の読み値をアナログ・メータ表示します
-・Melexis; Microelectronic Integrated Systems, Infra Red Thermometer
+
+・非接触温度センサ の読み値をアナログ・メータ表示します。
+
+・対応する非接触温度センサ：
+　M5Stack NCIR Non-Contact Infrared Thermometer Sensor Unit
+　Melexis MLX90614; Microelectronic Integrated Systems, Infra Red Thermometer
 
                                           Copyright (c) 2019-2020 Wataru KUNINO
 ********************************************************************************
@@ -14,13 +18,17 @@ Arduino IDE 開発環境イントール方法：
 M5Stack Arduino Library API 情報：
     https://docs.m5stack.com/#/ja/api
     https://docs.m5stack.com/#/en/arduino/arduino_api
+    
+NCIRセンサ MLX90614 (Melexis製)
+    https://www.melexis.com/en/product/MLX90614/
+    MLX90614xAA (5V仕様：x=A, 3V仕様：x=B) h=4.1mm 90°
 *******************************************************************************/
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
 
 float getTemp(byte reg = 0x7){
-    int16_t val = 0x0000;                       // 変数valを定義
+    int16_t val = 0xFFFF;                       // 変数valを定義
     Wire.beginTransmission(0x5A);               // MLX90614(0x5A)との通信を開始
     Wire.write(reg);                            // レジスタ番号を指定
     Wire.endTransmission(false);                // MLX90614(0x5A)との通信を継続
@@ -41,8 +49,9 @@ void setup(){                                   // 起動時に一度だけ実�
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    float Tsen= getTemp();                      // センサの測定温度を取得
-    Serial.printf("Tsen=%.2f\n",Tsen);          // 温度値をシリアル表示
-    analogMeterNeedle(Tsen);                    // 温度値をメータ表示
     delay(100);                                 // 0.1秒（100ms）の待ち時間処理
+    float Tsen= getTemp();                      // センサの測定温度を取得
+    if(Tsen < -20.) return;                     // -20℃未満のときは中断
+//  Serial.printf("Tsen=%.2f\n",Tsen);          // 温度値をシリアル表示
+    analogMeterNeedle(Tsen);                    // 温度値をメータ表示
 }
