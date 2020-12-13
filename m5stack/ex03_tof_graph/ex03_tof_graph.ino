@@ -20,6 +20,18 @@ Example 03: NCIR MLX90614 & TOF Human Body Temperature Meter for M5Stack
 
                                           Copyright (c) 2020-2021 Wataru KUNINO
 ********************************************************************************
+【ご注意】本ソフトウェアはセンサを使った学習用・実験用のサンプルプログラムです。
+・本ソフトウェアで測定、表示する値は体温の目安値です。
+・このまま医療やウィルス等の感染防止対策用に使用することは出来ません。
+・変換式は、特定の条件下で算出しており、一例として以下の条件を考慮していません。
+　- センサの個体差（製造ばらつき）
+　- 被験者の個人差（顔の大きさ・形状、髪の量、眼鏡の有無など）
+　- 室温による顔の表面温度差（体温と室温との差により、顔の表面温度が変化する）
+　- 基準体温36.0℃としていることによる検出体温37.5℃の誤差の増大※
+
+※37.5℃を検出するのであれば、本来は体温37.5℃の人体で近似式を求めるべきですが、
+　本ソフトウェアは学習用・実験用につき、約36℃の人体を使用して作成しました。
+********************************************************************************
 【参考文献】
 
 Arduino IDE 開発環境イントール方法：
@@ -44,12 +56,12 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
     #define PI 3.1415927                        // 円周率
 #endif
 #define FOV 90.                                 // センサの半値角
-#define BEEP 0                                  // ビープ音
+#define BEEP 1                                  // ビープ音
 #define ChartYmax 12                            // グラフ最大値
 #define ChartYmin -4                            // グラフ最小値
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.0;                        // 温度(加算)補正係数
-float TempOfsAra = 5.0;                         // 面積による計測時の体温-顔補正
+float TempOfsAra = 3.5 + 2.0;                   // 面積による計測時の体温-顔補正
 float DistOffset = 29.4771;                     // 距離補正係数
 char csvfile[10] = "/ncir.csv";
 char bmpfile[10] = "/ncir.bmp";
@@ -79,15 +91,14 @@ void printTitle(){
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
-    Wire.beginTransmission(0x5A);               // MLX90614(0x5A)との通信を開始
-    Wire.write(reg);                            // レジスタ番号を指定
-    if(Wire.endTransmission(false)==0){         // MLX90614(0x5A)との通信を継続
+    Wire.beginTransmission(0x5A);               // MLX90614とのI2C通信を開始
+    Wire.write(reg);                            // レジスタ番号を指定（送信）
+    if(Wire.endTransmission(false) == 0){       // 送信を終了（接続は継続）
         Wire.requestFrom(0x5A, 2);              // 2バイトのデータを要求
-        if(Wire.available() >= 2){              // 2バイト以上を受信
-            val = (int16_t)Wire.read();         // 1バイト目を変数tempの下位へ
-            val |= ((int16_t)Wire.read()) << 8; // 2バイト目を変数tempの上位へ
-        }
+        val = (int16_t)Wire.read();             // 1バイト目を変数tempの下位へ
+        val |= ((int16_t)Wire.read()) << 8;     // 2バイト目を変数tempの上位へ
     }
+    Wire.endTransmission();                     // I2C通信の切断
     return (float)val * 0.02 - 273.15;          // 温度に変換して応答
 }
 

@@ -2,7 +2,7 @@
 Example 03: NCIR MLX90614 & TOF Human Body Temperature Meter for M5Stack
 
 ・非接触温度センサ の読み値を体温に変換し、アナログ・メータ表示します。
-・測距センサを使って顔までの距離を測定し、1次変換式により体温を算出します。
+・測距センサを使って顔までの距離を測定し、顔の面積換算により体温を算出します。
 
 ・対応する非接触温度センサ：
 　M5Stack NCIR Non-Contact Infrared Thermometer Sensor Unit
@@ -46,9 +46,12 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
-float TempWeight = 1110.73;                     // 温度(利得)補正係数
-float TempOffset = 36.0;                        // 温度(加算)補正係数
-float DistOffset = 29.4771;                     // 距離補正係数
+#ifndef PI
+    #define PI 3.1415927                        // 円周率
+#endif
+#define FOV 90.                                 // センサの半値角
+float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
+float TempOfsAra = 3.5 + 2.0;                   // 面積による計測時の体温-顔補正
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 
 float getTemp(byte reg = 0x7){
@@ -68,8 +71,8 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC","Face Prop",30,40);  // メータのレンジおよび表示設定
-    M5.Lcd.print("Example 03: Body Temperature Meter [ToF][Prop]"); // タイトル
+    analogMeterInit("degC","Face Area",30,40);  // メータのレンジおよび表示設定
+    M5.Lcd.print("Example 03: Body Temperature Meter [ToF][Area]"); // タイトル
 }
 
 void loop(){                                    // 繰り返し実行する関数
@@ -80,15 +83,16 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
     
-    // 体温計算 係数換算方式
-    // 体温Tobj = 基準温度 + センサ温度差値 - 温度利得 ÷ 距離
-    float Tobj = TempOffset + (Tsen - Tenv) - TempWeight / (Dist + DistOffset);
+    // 面積換算方式
+    // 体温Tobj = 環境温度 + センサ温度差値×√(センサ測定面積÷測定対象面積)
+    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
+    float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
 //  Serial.printf("ToF=%.1fcm, ",Dist/10);      // 測距結果を出力
 //  Serial.printf("Te=%.2f, ",Tenv);            // 環境温度を出力
 //  Serial.printf("Ts=%.2f, ",Tsen);            // 測定温度を出力
 //  Serial.printf("To=%.2f\n",Tobj);            // 物体温度を出力
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
-
+    
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
     M5.Lcd.printf("ToF=%.0fcm ",Dist/10);       // 測距結果を表示
     M5.Lcd.printf("Te=%.1f ",Tenv);             // 環境温度を表示

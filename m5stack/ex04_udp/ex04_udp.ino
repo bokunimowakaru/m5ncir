@@ -1,8 +1,8 @@
 /*******************************************************************************
-Example 03: NCIR MLX90614 & TOF Human Body Temperature Meter for M5Stack
+Example 04: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
 
-・非接触温度センサ の読み値を体温に変換し、アナログ・メータ表示します。
-・測距センサを使って顔までの距離を測定し、1次変換式により体温を算出します。
+・体温が35℃以上でピンポン音、37.5℃以上で警報音を鳴らします。
+・LAN内にUDPブロードキャストで通知します。
 
 ・対応する非接触温度センサ：
 　M5Stack NCIR Non-Contact Infrared Thermometer Sensor Unit
@@ -46,10 +46,40 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
+#include <WiFi.h>                               // ESP32用WiFiライブラリ
+#include <WiFiUdp.h>                            // UDP通信を行うライブラリ
+#define SSID "iot-core-esp32"                   // 無線LANアクセスポイントのSSID
+#define PASS "password"                         // パスワード
+#define PORT 1024                               // 送信のポート番号
+#define DEVICE "pir_s_5,"                       // デバイス名(5字+"_"+番号+",")
+
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.0;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
+int pir_prev = 0;                               // 人体検知状態の前回値
+float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
+int temp_count = 0;                             // temp_sumの測定サンプル数
+IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
+
+void sendUdp(String dev, String S){
+    WiFiUDP udp;                                // UDP通信用のインスタンスを定義
+    udp.beginPacket(IP_BROAD, PORT);            // UDP送信先を設定
+    udp.println(dev + S);
+    udp.endPacket();                            // UDP送信の終了(実際に送信する)
+    Serial.println("udp://" + IP_BROAD.toString() + ":" + PORT + " " + dev + S);
+    M5.Lcd.println("UDP:" + S + " ");
+    delay(100);                                 // 送信待ち時間
+}
+
+void sendUdp_Pir(int pir, float temp){
+    String S = String(pir);                     // 変数Sに人体検知状態を代入
+    S +=  ", " + String(pir_prev);              // 前回値を追加
+    S +=  ", " + String(temp, 1);               // 体温を追加
+    sendUdp(DEVICE, S);                         // sendUdpを呼び出し
+    pir_prev = pir;                             // 今回の値を前回値として更新
+}
+
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
@@ -69,33 +99,60 @@ void setup(){                                   // 起動時に一度だけ実�
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
     analogMeterInit("degC","Face Prop",30,40);  // メータのレンジおよび表示設定
-    M5.Lcd.print("Example 03: Body Temperature Meter [ToF][Prop]"); // タイトル
+    M5.Lcd.println("Example 04: Body Temperature Checker [ToF][UDP]");
+    delay(500);                                 // 電源安定待ち時間処理0.5秒
+    WiFi.mode(WIFI_STA);                        // 無線LANを【子機】モードに設定
+    WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
+    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
+        delay(500);                             // 待ち時間処理
+        M5.Lcd.print('.');                      // 進捗表示
+    }
+    IP_BROAD = WiFi.localIP();                  // IPアドレスを取得
+    IP_BROAD[3] = 255;                          // ブロードキャストアドレスに
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    delay(100);                                 // 0.1秒（100ms）の待ち時間処理
+    delay(1);                                   // 1msの待ち時間処理
     float Dist = (float)VL53L0X_get();          // 測距センサVL53L0Xから距離取得
-    if(Dist <= 20. || Dist > 400) return;       // 20mm以下/400mm超のときに戻る
+    if(Dist <= 20.) return;                     // 20mm以下の時に再測定
+    if(Dist > 400){                             // 400mm超のとき
+        if(pir_prev == 1 && temp_count > 0){    // 人体検知中で測定値がある時
+            sendUdp_Pir(0,temp_sum/(float)temp_count); // 体温の平均値をUDP送信
+        }
+        temp_sum = 0;
+        temp_count = 0;
+        return;                                 // 測定処理を中断
+    }
+    if(temp_count == 0) beep_chime();           // チャイム音
+    
     float Tenv= getTemp(6);                     // センサの環境温度を取得
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
     
-    // 体温計算 係数換算方式
     // 体温Tobj = 基準温度 + センサ温度差値 - 温度利得 ÷ 距離
     float Tobj = TempOffset + (Tsen - Tenv) - TempWeight / (Dist + DistOffset);
-//  Serial.printf("ToF=%.1fcm, ",Dist/10);      // 測距結果を出力
-//  Serial.printf("Te=%.2f, ",Tenv);            // 環境温度を出力
-//  Serial.printf("Ts=%.2f, ",Tsen);            // 測定温度を出力
-//  Serial.printf("To=%.2f\n",Tobj);            // 物体温度を出力
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
-
-    M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
-    M5.Lcd.printf("ToF=%.0fcm ",Dist/10);       // 測距結果を表示
-    M5.Lcd.printf("Te=%.1f ",Tenv);             // 環境温度を表示
-    M5.Lcd.printf("Ts=%.1f ",Tsen);             // 測定温度を表示
-    M5.Lcd.printf("To=%.1f ",Tobj);             // 物体温度を表示
-    analogMeterNeedle(Tobj);                    // 温度値をメータ表示
-    lcd_row++;                                  // 行数に1を加算する
-    if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    temp_sum += Tobj;
+    temp_count++;
+    
+    if(temp_count % 5 == 0){
+        M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
+        M5.Lcd.printf("ToF=%.0fcm ",Dist/10);       // 測距結果を表示
+        M5.Lcd.printf("Te=%.1f ",Tenv);             // 環境温度を表示
+        M5.Lcd.printf("Ts=%.1f ",Tsen);             // 測定温度を表示
+        M5.Lcd.printf("To=%.1f ",Tobj);             // 物体温度を表示
+        analogMeterNeedle(Tobj);                    // 温度値をメータ表示
+        lcd_row++;                                  // 行数に1を加算する
+        if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
+        M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    }
+    
+    float temp_avr = temp_sum / (float)temp_count;
+    if((pir_prev == 1 || temp_count < 10) && temp_count < 50) return;
+    
+    sendUdp_Pir(1, temp_avr);  // 体温の平均値をUDP送信
+    beep(1047);
+    if(temp_avr >= 37.5) beep_alert();
+    temp_sum = Tobj;
+    temp_count = 1;
 }

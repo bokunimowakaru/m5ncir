@@ -34,18 +34,19 @@ NCIRセンサ MLX90614 (Melexis製)
 #define FOV 90.                                 // センサの半値角
 float Dist = 200;                               // 測定対象までの距離(mm)
 float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
-float TempOfsAra = 5.0;                         // 体温と顔温度の差(補正用)
+float TempOfsAra = 3.5 + 2.0;                   // 面積による計測時の体温-顔補正
+int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
-    Wire.beginTransmission(0x5A);               // MLX90614(0x5A)との通信を開始
-    Wire.write(reg);                            // レジスタ番号を指定
-    Wire.endTransmission(false);                // MLX90614(0x5A)との通信を継続
-    Wire.requestFrom(0x5A, 2);                  // 2バイトのデータを要求
-    if(Wire.available() >= 2){                  // 2バイト以上受信(機能しない)
+    Wire.beginTransmission(0x5A);               // MLX90614とのI2C通信を開始
+    Wire.write(reg);                            // レジスタ番号を指定（送信）
+    if(Wire.endTransmission(false) == 0){       // 送信を終了（接続は継続）
+        Wire.requestFrom(0x5A, 2);              // 2バイトのデータを要求
         val = (int16_t)Wire.read();             // 1バイト目を変数tempの下位へ
         val |= ((int16_t)Wire.read()) << 8;     // 2バイト目を変数tempの上位へ
     }
+    Wire.endTransmission();                     // I2C通信の切断
     return (float)val * 0.02 - 273.15;          // 温度に変換して応答
 }
 
@@ -54,10 +55,9 @@ void setup(){                                   // 起動時に一度だけ実�
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
     analogMeterInit("cm","Face Dist", 0, 40);   // メータのレンジおよび表示設定
-    M5.Lcd.print("Example 02: Object Distance Meter"); // タイトル表示
+    M5.Lcd.print("Example 02: Distance Meter"); // タイトル表示
 }
 
-int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 void loop(){                                    // 繰り返し実行する関数
     delay(100);                                 // 0.1秒（100ms）の待ち時間処理
     float Tenv= getTemp(6);                     // センサの環境温度を取得
@@ -78,13 +78,12 @@ void loop(){                                    // 繰り返し実行する関�
 //  Serial.printf("Dist=%.2f\n",cDist / 10);    // 物体(逆算)距離を出力
 
     M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
-    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
     M5.Lcd.printf("Tenv=%.1f ",Tenv);                       // 環境温度を表示
     M5.Lcd.printf("Tsen=%.1f ",Tsen);           // 測定温度を表示
     M5.Lcd.printf("Tobj=%.1f ",Tobj);           // 物体温度を表示
     M5.Lcd.printf("Dist=%.0f cm ",cDist / 10);  // 物体(逆算)距離を表示
-
+    analogMeterNeedle(cDist / 10);              // 物体(逆算)距離をメータ表示
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    analogMeterNeedle(cDist / 10);              // 物体(逆算)距離をメータ表示
+    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }
