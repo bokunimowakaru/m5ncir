@@ -28,5 +28,5 @@ float getTemp(int reg){
 }
 
 float getTemp(){
-    getTemp(0x7);
+    return getTemp(7);
 }
