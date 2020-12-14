@@ -60,7 +60,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #define ChartYmax 12                            // グラフ最大値
 #define ChartYmin -4                            // グラフ最小値
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
-float TempOffset = 36.0;                        // 温度(加算)補正係数
+float TempOffset = 36.5;                        // 温度(加算)補正係数
 float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
 float DistOffset = 29.4771;                     // 距離補正係数
 char csvfile[10] = "/ncir.csv";

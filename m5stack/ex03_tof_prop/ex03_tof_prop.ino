@@ -47,7 +47,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
-float TempOffset = 36.0;                        // 温度(加算)補正係数
+float TempOffset = 36.5;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 

@@ -54,7 +54,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #define DEVICE "pir_s_5,"                       // デバイス名(5字+"_"+番号+",")
 
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
-float TempOffset = 36.0;                        // 温度(加算)補正係数
+float TempOffset = 36.5;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 int pir_prev = 0;                               // 人体検知状態の前回値
