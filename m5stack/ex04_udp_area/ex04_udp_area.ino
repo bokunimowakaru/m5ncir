@@ -87,7 +87,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC","Face Prop",30,40);  // メータのレンジおよび表示設定
+    analogMeterInit("degC","Face Area",30,40);  // メータのレンジおよび表示設定
     M5.Lcd.println("Example 04: Body Temperature Checker [ToF][UDP]");
     delay(500);                                 // 電源安定待ち時間処理0.5秒
     WiFi.mode(WIFI_STA);                        // 無線LANを【子機】モードに設定
