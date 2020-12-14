@@ -52,10 +52,13 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define DEVICE "pir_s_5,"                       // デバイス名(5字+"_"+番号+",")
+#ifndef PI
+    #define PI 3.1415927                        // 円周率
+#endif
+#define FOV 90.                                 // センサの半値角
 
-float TempWeight = 1110.73;                     // 温度(利得)補正係数
-float TempOffset = 36.0;                        // 温度(加算)補正係数
-float DistOffset = 29.4771;                     // 距離補正係数
+float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
+float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 int pir_prev = 0;                               // 人体検知状態の前回値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
@@ -115,8 +118,9 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
     
-    // 体温Tobj = 基準温度 + センサ温度差値 - 温度利得 ÷ 距離
-    float Tobj = TempOffset + (Tsen - Tenv) - TempWeight / (Dist + DistOffset);
+    // 体温Tobj = 環境温度 + センサ温度差値×√(センサ測定面積÷測定対象面積)
+    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
+    float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     temp_sum += Tobj;                           // 変数temp_sumに体温を加算
     temp_count++;                               // 測定済サンプル数に1を加算

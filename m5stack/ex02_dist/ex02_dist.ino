@@ -34,7 +34,7 @@ NCIRセンサ MLX90614 (Melexis製)
 #define FOV 90.                                 // センサの半値角
 float Dist = 200;                               // 測定対象までの距離(mm)
 float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
-float TempOfsAra = 3.5 + 2.0;                   // 面積による計測時の体温-顔補正
+float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 
 float getTemp(byte reg = 0x7){
