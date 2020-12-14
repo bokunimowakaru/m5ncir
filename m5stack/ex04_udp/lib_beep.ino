@@ -55,6 +55,10 @@ void beep_chime(){
     beep(NOTE_A5, 100);
 }
 
+void beep_alert(int num){
+    for(; num > 0 ; num--) for(int i = 2217; i > 200; i /= 2) beep(i);
+}
+
 void beep_alert(){
-    for(int j = 0; j < 3 ; j++) for(int i = 2217; i > 200; i /= 2) beep(i);
+    beep_alert(3);
 }
