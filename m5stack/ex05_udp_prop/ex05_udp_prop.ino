@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 04: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
+Example 05: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
 
 ・体温が35℃以上でピンポン音、37.5℃以上で警報音を鳴らします。
 ・LAN内にUDPブロードキャストで通知します。
@@ -52,13 +52,10 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define DEVICE "pir_s_5,"                       // デバイス名(5字+"_"+番号+",")
-#ifndef PI
-    #define PI 3.1415927                        // 円周率
-#endif
-#define FOV 90.                                 // センサの半値角
 
-float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
-float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
+float TempWeight = 1110.73;                     // 温度(利得)補正係数
+float TempOffset = 36.5;                        // 温度(加算)補正係数
+float DistOffset = 29.4771;                     // 距離補正係数
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 int pir_prev = 0;                               // 人体検知状態の前回値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
@@ -87,8 +84,8 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC","Face Area",30,40);  // メータのレンジおよび表示設定
-    M5.Lcd.println("Example 04: Body Temperature Checker [ToF][UDP]");
+    analogMeterInit("degC","Face Prop",30,40);  // メータのレンジおよび表示設定
+    M5.Lcd.println("Example 05: Body Temperature Checker [ToF][UDP]");
     delay(500);                                 // 電源安定待ち時間処理0.5秒
     WiFi.mode(WIFI_STA);                        // 無線LANを【子機】モードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
@@ -118,9 +115,8 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
     
-    // 体温Tobj = 環境温度 + センサ温度差値×√(センサ測定面積÷測定対象面積)
-    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
-    float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
+    // 体温Tobj = 基準温度 + センサ温度差値 - 温度利得 ÷ 距離
+    float Tobj = TempOffset + (Tsen - Tenv) - TempWeight / (Dist + DistOffset);
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     temp_sum += Tobj;                           // 変数temp_sumに体温を加算
     temp_count++;                               // 測定済サンプル数に1を加算
@@ -144,7 +140,7 @@ void loop(){                                    // 繰り返し実行する関�
     //  pir_prev かつ temp_count が 10 以上のとき 
     //  または temp_count が 50 以上のとき
     sendUdp_Pir(1, temp_avr);                   // 体温の平均値をUDP送信
-    beep(1047);                                 // 1047Hzのビープ音(送信御)
+    beep(1047);                                 // 1047Hzのビープ音(測定中)
     if(temp_avr >= 37.5) beep_alert(3);         // 37.5℃以上でアラート音
     temp_sum = Tobj;                            // 最後の測定結果のみを代入
     temp_count = 1;                             // 測定済サンプル数を1に
