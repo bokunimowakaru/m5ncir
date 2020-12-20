@@ -1,7 +1,9 @@
 /*******************************************************************************
 Example 05: NCIR MLX90614 & TOF Human Body Temperature Checker
 
-・体温が35℃以上でピンポン音、37.5℃以上で警報音を鳴らします。
+・距離センサが人体を検出すると、測定を開始します。
+・測定が完了したときに37.5℃以上だった場合、警告音を鳴らします。
+・35.0～37.5℃だった場合、ピンポン音を鳴らします。
 ・LAN内にUDPブロードキャストで通知します。
 
 ・対応する非接触温度センサ：
@@ -88,7 +90,6 @@ void setup(){                                   // 起動時に一度だけ実�
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    delay(1);                                   // 1msの待ち時間処理
     float Dist = (float)VL53L0X_get();          // 測距センサVL53L0Xから距離取得
     if(Dist <= 20.) return;                     // 20mm以下の時に再測定
     if(Dist > 400){                             // 400mm超のとき
@@ -111,23 +112,28 @@ void loop(){                                    // 繰り返し実行する関�
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     temp_sum += Tobj;                           // 変数temp_sumに体温を加算
     temp_count++;                               // 測定済サンプル数に1を加算
+    float temp_avr = temp_sum / (float)temp_count;  // 体温の平均値を算出
     
     if(temp_count % 5 == 0){
         Serial.printf("ToF=%.0fcm ",Dist/10);   // 測距結果を表示
         Serial.printf("Te=%.1f ",Tenv);         // 環境温度を表示
         Serial.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
-        Serial.printf("To=%.1f\n",Tobj);        // 物体温度を表示
+        Serial.printf("To=%.1f ",Tobj);         // 物体温度を表示
+        Serial.printf("Tavr=%.1f\n",temp_avr);  // 平均温度を表示
     }
+    if(temp_count % 20 != 0) return;            // 剰余が0以外のときに先頭へ
     
-    float temp_avr = temp_sum / (float)temp_count;  // 体温の平均値を算出
-    if((pir_prev == 1 || temp_count < 10) && temp_count < 50) return;
-    
-    // 実行要件(以下のどちらかを満たした時)
-    //  pir_prev かつ temp_count が 10 以上のとき 
-    //  または temp_count が 50 以上のとき
     sendUdp_Pir(1, temp_avr);                   // 体温の平均値をUDP送信
     beep(1047);                                 // 1047Hzのビープ音(測定中)
-    if(temp_avr >= 37.5) beep_alert(3);         // 37.5℃以上でアラート音
-    temp_sum = Tobj;                            // 最後の測定結果のみを代入
-    temp_count = 1;                             // 測定済サンプル数を1に
+    if(temp_avr >= 37.5){                       // 37.5℃以上のとき(発熱検知)
+        beep_alert(3);                          // アラート音を3回、鳴らす
+    }else if(temp_avr < 35.0){                  // 35.0℃未満のとき(再測定)
+        temp_sum = Tobj;                        // 最後の測定結果のみを代入
+        temp_count = 1;                         // 測定済サンプル数を1に
+    }else{
+        beep_chime();                           // ピンポン音を鳴らす
+        temp_sum = 0.0;                         // 体温の合計値を0にリセット
+        temp_count = 0;                         // 測定サンプル数を0にリセット
+        delay(3000);                            // 3秒間、待機する
+    }
 }

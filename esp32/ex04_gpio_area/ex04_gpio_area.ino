@@ -128,7 +128,7 @@ void loop(){                                    // 繰り返し実行する関�
         digitalWrite(LED_GREEN_PIN, LOW);       // LED緑を消灯
         beep(1047);                             // 1047Hzのビープ音(測定中)
     }
-    if(temp_count % 20 != 0) return;            // 10の剰余が0以外のときに先頭へ
+    if(temp_count % 20 != 0) return;            // 剰余が0以外のときに先頭へ
     
     if(temp_avr >= 37.5){                       // 37.5℃以上のとき(発熱検知)
         digitalWrite(LED_RED_PIN, HIGH);        // LED赤を点灯
@@ -143,6 +143,6 @@ void loop(){                                    // 繰り返し実行する関�
         beep_chime();                           // ピンポン音を鳴らす
         temp_sum = 0.0;                         // 体温の合計値を0にリセット
         temp_count = 0;                         // 測定サンプル数を0にリセット
-        delay(3000);                            // 5秒間、待機する
+        delay(3000);                            // 3秒間、待機する
     }
 }
