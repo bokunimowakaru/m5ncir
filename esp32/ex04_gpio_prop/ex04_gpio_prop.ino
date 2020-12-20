@@ -42,7 +42,6 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #define LED_RED_PIN   16                        // 赤色LEDのIOポート番号
 #define LED_GREEN_PIN 17                        // 緑色LEDのIOポート番号
 #define BUZZER_PIN    25                        // IO 25にスピーカを接続
-#define VOL 3                                   // スピーカ用の音量(0～10)
 
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.5;                        // 温度(加算)補正係数
@@ -55,36 +54,6 @@ int temp_count = 0;                             // temp_sumの測定済サンプ
 #define LEDC_CHANNEL_0     0    // use first channel of 16 channels (started from zero)
 #define LEDC_TIMER_13_BIT  13   // use 13 bit precission for LEDC timer
 #define LEDC_BASE_FREQ     5000 // use 5000 Hz as a LEDC base frequency
-
-void beepSetup(int PIN){
-    pinMode(BUZZER_PIN,OUTPUT);                 // スピーカのポートを出力に
-    Serial.print("ledSetup LEDC_CHANNEL_0 = ");
-    Serial.print(LEDC_CHANNEL_0);
-    Serial.print(", BUZZER_PIN = ");
-    Serial.print(BUZZER_PIN);
-    Serial.print(", freq. = ");
-    Serial.println(ledcSetup(LEDC_CHANNEL_0, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT),3);
-    ledcAttachPin(PIN, LEDC_CHANNEL_0);
-}
-
-void beep(int freq = 880, int t = 100){         // ビープ音を鳴らす関数
-    ledcWriteTone(0, freq);                     // PWM出力を使って音を鳴らす
-    for(int duty = 50; duty > 1; duty /= 2){    // PWM出力のDutyを減衰させる
-        ledcWrite(0, VOL * duty / 10);          // 音量を変更する
-        delay(t / 6);                           // 0.1秒(100ms)の待ち時間処理
-    }
-    ledcWrite(0, 0);                            // ビープ鳴音の停止
-}
-
-void beep_chime(){                              // チャイム音を鳴らす関数
-    beep(1109, 600);                            // ピーン音(1109Hz)を0.6秒再生
-    delay(300);                                 // 0.3秒(300ms)の待ち時間処理
-    beep(880, 100);                             // ポン音(880Hz)を0.6秒再生
-}
-
-void beep_alert(int num = 3){
-    for(; num > 0 ; num--) for(int i = 2217; i > 200; i /= 2) beep(i);
-}
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     Serial.begin(115200);                       // シリアル通信速度を設定する

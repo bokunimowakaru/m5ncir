@@ -50,7 +50,6 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #include <Wire.h>                               // I2C通信用ライブラリ
 #define LED_RED_PIN   16                        // 赤色LEDのIOポート番号
 #define LED_GREEN_PIN 17                        // 緑色LEDのIOポート番号
-#define VOL 3                                   // スピーカ用の音量(0～10)
 #ifndef PI
     #define PI 3.1415927                        // 円周率
 #endif
@@ -61,26 +60,6 @@ float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時�
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
-
-void beep(int freq = 880, int t = 100){         // ビープ音を鳴らす関数
-    M5.Speaker.begin();                         // M5Stack用スピーカの起動
-    for(int vol = VOL; vol > 0; vol--){         // 繰り返し処理(6回)
-        M5.Speaker.setVolume(vol);              // スピーカの音量を設定
-        M5.Speaker.tone(freq);                  // スピーカ出力freq Hzの音を出力
-        delay(t / VOL);                         // 0.01秒(10ms)の待ち時間処理
-    }
-    M5.Speaker.end();                           // スピーカ出力を停止する
-}
-
-void beep_chime(){                              // チャイム音を鳴らす関数
-    beep(1109, 600);                            // ピーン音(1109Hz)を0.6秒再生
-    delay(300);                                 // 0.3秒(300ms)の待ち時間処理
-    beep(880, 100);                             // ポン音(880Hz)を0.6秒再生
-}
-
-void beep_alert(int num = 3){
-    for(; num > 0 ; num--) for(int i = 2217; i > 200; i /= 2) beep(i);
-}
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動

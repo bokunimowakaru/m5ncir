@@ -57,20 +57,20 @@ void beep(int freq, int t){
 #define LEDC_CHANNEL_0     0    // use first channel of 16 channels (started from zero)
 #define LEDC_TIMER_13_BIT  13   // use 13 bit precission for LEDC timer
 #define LEDC_BASE_FREQ     5000 // use 5000 Hz as a LEDC base frequency
-int BUZZER_PIN = -1; // 初期化有無
+int BEEP_PIN = -1; // 初期化有無
 void beepSetup(int PIN){
-    BUZZER_PIN = PIN;
-    pinMode(BUZZER_PIN,OUTPUT);                 // スピーカのポートを出力に
+    BEEP_PIN = PIN;
+    pinMode(BEEP_PIN,OUTPUT);                 // スピーカのポートを出力に
     Serial.print("ledSetup LEDC_CHANNEL_0 = ");
     Serial.print(LEDC_CHANNEL_0);
-    Serial.print(", BUZZER_PIN = ");
-    Serial.print(BUZZER_PIN);
+    Serial.print(", BEEP_PIN = ");
+    Serial.print(BEEP_PIN);
     Serial.print(", freq. = ");
     Serial.println(ledcSetup(LEDC_CHANNEL_0, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT),3);
     ledcAttachPin(PIN, LEDC_CHANNEL_0);
 }
 void beep(int freq, int t){                     // ビープ音を鳴らす関数
-    if(BUZZER_PIN < 0) beepSetup(25);           // ポート25で初期化
+    if(BEEP_PIN < 0) beepSetup(25);           // ポート25で初期化
     ledcWriteTone(0, freq);                     // PWM出力を使って音を鳴らす
     for(int duty = 50; duty > 1; duty /= 2){    // PWM出力のDutyを減衰させる
         ledcWrite(0, BEEP_VOL * duty / 10);     // 音量を変更する
