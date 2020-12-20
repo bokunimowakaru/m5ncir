@@ -36,8 +36,14 @@ int beep_chimeBells(int output, int count) {
 }
 */
 
-#ifdef M5
+#ifdef _M5STACK_H_
 void beep(int freq, int t){
+    if(!BEEP_VOL){
+        M5.Lcd.invertDisplay(false);            // 画面を反転する
+        delay(t);
+        M5.Lcd.invertDisplay(true);             // 画面の反転を戻す
+        return;
+    }
     M5.Speaker.begin();                         // M5Stack用スピーカの起動
     for(int vol = BEEP_VOL; vol > 0; vol--){    // 繰り返し処理(6回)
         M5.Speaker.setVolume(vol);              // スピーカの音量を設定
@@ -53,7 +59,7 @@ void beep(int freq, int t){
 #define LEDC_BASE_FREQ     5000 // use 5000 Hz as a LEDC base frequency
 int BUZZER_PIN = -1; // 初期化有無
 void beepSetup(int PIN){
-    BUZZER_PIN = BUZZER_PIN;
+    BUZZER_PIN = PIN;
     pinMode(BUZZER_PIN,OUTPUT);                 // スピーカのポートを出力に
     Serial.print("ledSetup LEDC_CHANNEL_0 = ");
     Serial.print(LEDC_CHANNEL_0);
@@ -64,7 +70,7 @@ void beepSetup(int PIN){
     ledcAttachPin(PIN, LEDC_CHANNEL_0);
 }
 void beep(int freq, int t){                     // ビープ音を鳴らす関数
-    if(!BUZZER_PIN >= 0) beepSetup(25);         // ポート25で初期化
+    if(BUZZER_PIN < 0) beepSetup(25);           // ポート25で初期化
     ledcWriteTone(0, freq);                     // PWM出力を使って音を鳴らす
     for(int duty = 50; duty > 1; duty /= 2){    // PWM出力のDutyを減衰させる
         ledcWrite(0, BEEP_VOL * duty / 10);     // 音量を変更する

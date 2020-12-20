@@ -56,7 +56,6 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
     #define PI 3.1415927                        // 円周率
 #endif
 #define FOV 90.                                 // センサの半値角
-#define BEEP 1                                  // ビープ音
 #define ChartYmax 12                            // グラフ最大値
 #define ChartYmin -4                            // グラフ最小値
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
@@ -66,7 +65,7 @@ float DistOffset = 29.4771;                     // 距離補正係数
 char csvfile[10] = "/ncir.csv";
 char bmpfile[10] = "/ncir.bmp";
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
-enum Mode {Area=1, Prop=2, NCIR=3, TOF=4, Chrt=5, None=0} mode = Prop;
+enum Mode {Area=1, Prop=2, NCIR=3, TOF=4, Chrt=5, None=0} mode = Area;
 // モード 1:体温(面積換算) 2:体温(係数換算) 3:NICRセンサ値 4:TOFセンサ値 5:グラフ
 
 void printMenu(){
@@ -93,7 +92,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC", "Face Prop", 30, 40);    // メータのレンジおよび表示設定
+    analogMeterInit("degC", "Face Area", 30, 40);    // メータのレンジおよび表示設定
     printTitle();
     File file = SD.open(csvfile, "w");
     if(file){
@@ -101,19 +100,6 @@ void setup(){                                   // 起動時に一度だけ実�
         file.close();
     }
     M5.Lcd.invertDisplay(true);
-}
-
-void beep(int freq){
-    if(BEEP > 0){
-        M5.Speaker.begin();                     // M5Stack用スピーカの起動
-        M5.Speaker.tone(freq);                  // スピーカ出力 freq Hzの音を出力
-        delay(10);
-        M5.Speaker.end();                       // スピーカ出力を停止する
-    }else{
-        M5.Lcd.invertDisplay(false);
-        delay(100);
-        M5.Lcd.invertDisplay(true);
-    }
 }
 
 int temp2yaxis(float temp, float min = 20., float max = 40.){
@@ -154,8 +140,9 @@ void loop(){                                    // 繰り返し実行する関�
         while(M5.BtnA.read()){
             delay(100);
             if(millis() - t > 3000){            // 3秒間の長押しを検出
-                bmpScreenServer(bmpfile);       // スクリーンショットを保存
                 beep(1047);
+                bmpScreenServer(bmpfile);       // スクリーンショットを保存
+                beep_chime();
                 return;
             }
         }
