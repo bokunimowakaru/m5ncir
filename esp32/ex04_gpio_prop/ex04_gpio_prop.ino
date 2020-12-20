@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 04: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
+Example 04: NCIR MLX90614 & TOF Human Body Temperature Checker
 
 ・距離センサが人体を検出すると、測定を開始します。
 ・測定中は緑色LEDが点滅するとともに、測定音を鳴らします。
@@ -30,14 +30,6 @@ Example 04: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
 ********************************************************************************
 【参考文献】
 
-Arduino IDE 開発環境イントール方法：
-    https://github.com/m5stack/M5Stack/blob/master/docs/getting_started_ja.md
-    https://docs.m5stack.com/#/en/related_documents/Arduino_IDE
-
-M5Stack Arduino Library API 情報：
-    https://docs.m5stack.com/#/ja/api
-    https://docs.m5stack.com/#/en/arduino/arduino_api
-
 NCIRセンサ MLX90614 (Melexis製)
     https://www.melexis.com/en/product/MLX90614/
     MLX90614xAA (5V仕様：x=A, 3V仕様：x=B) h=4.1mm 90°
@@ -46,30 +38,42 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
     https://groups.google.com/d/msg/diyrovers/lc7NUZYuJOg/ICPrYNJGBgAJ
 *******************************************************************************/
 
-#include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
 #define LED_RED_PIN   16                        // 赤色LEDのIOポート番号
 #define LED_GREEN_PIN 17                        // 緑色LEDのIOポート番号
+#define BUZZER_PIN    25                        // IO 25にスピーカを接続
 #define VOL 3                                   // スピーカ用の音量(0～10)
-#ifndef PI
-    #define PI 3.1415927                        // 円周率
-#endif
-#define FOV 90.                                 // センサの半値角
 
-float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
-float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
-int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
+float TempWeight = 1110.73;                     // 温度(利得)補正係数
+float TempOffset = 36.5;                        // 温度(加算)補正係数
+float DistOffset = 29.4771;                     // 距離補正係数
+int pir_prev = 0;                               // 人体検知状態の前回値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
 
+/* スピーカ出力用 LEDC */
+#define LEDC_CHANNEL_0     0    // use first channel of 16 channels (started from zero)
+#define LEDC_TIMER_13_BIT  13   // use 13 bit precission for LEDC timer
+#define LEDC_BASE_FREQ     5000 // use 5000 Hz as a LEDC base frequency
+
+void beepSetup(int PIN){
+    pinMode(BUZZER_PIN,OUTPUT);                 // スピーカのポートを出力に
+    Serial.print("ledSetup LEDC_CHANNEL_0 = ");
+    Serial.print(LEDC_CHANNEL_0);
+    Serial.print(", BUZZER_PIN = ");
+    Serial.print(BUZZER_PIN);
+    Serial.print(", freq. = ");
+    Serial.println(ledcSetup(LEDC_CHANNEL_0, LEDC_BASE_FREQ, LEDC_TIMER_13_BIT),3);
+    ledcAttachPin(PIN, LEDC_CHANNEL_0);
+}
+
 void beep(int freq = 880, int t = 100){         // ビープ音を鳴らす関数
-    M5.Speaker.begin();                         // M5Stack用スピーカの起動
-    for(int vol = VOL; vol > 0; vol--){         // 繰り返し処理(6回)
-        M5.Speaker.setVolume(vol);              // スピーカの音量を設定
-        M5.Speaker.tone(freq);                  // スピーカ出力freq Hzの音を出力
-        delay(t / VOL);                         // 0.01秒(10ms)の待ち時間処理
+    ledcWriteTone(0, freq);                     // PWM出力を使って音を鳴らす
+    for(int duty = 50; duty > 1; duty /= 2){    // PWM出力のDutyを減衰させる
+        ledcWrite(0, VOL * duty / 10);          // 音量を変更する
+        delay(t / 6);                           // 0.1秒(100ms)の待ち時間処理
     }
-    M5.Speaker.end();                           // スピーカ出力を停止する
+    ledcWrite(0, 0);                            // ビープ鳴音の停止
 }
 
 void beep_chime(){                              // チャイム音を鳴らす関数
@@ -83,13 +87,12 @@ void beep_alert(int num = 3){
 }
 
 void setup(){                                   // 起動時に一度だけ実行する関数
-    M5.begin();                                 // M5Stack用ライブラリの起動
+    Serial.begin(115200);                       // シリアル通信速度を設定する
+    beepSetup(BUZZER_PIN);                      // ブザー用するPWM制御部の初期化
     pinMode(LED_RED_PIN, OUTPUT);               // GPIO 18 を赤色LED用に設定
     pinMode(LED_GREEN_PIN, OUTPUT);             // GPIO 19 を緑色LED用に設定
     Wire.begin();                               // I2Cを初期化
-    M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
-    analogMeterInit("degC","Face Area",30,40);  // メータのレンジおよび表示設定
-    M5.Lcd.println("Example 04: Body Temperature Checker [ToF][LED]");
+    Serial.println("Example 04: Body Temperature Checker [ToF][LED]");
 }
 
 void loop(){                                    // 繰り返し実行する関数
@@ -105,25 +108,19 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
     
-    // 体温Tobj = 環境温度 + センサ温度差値×√(センサ測定面積÷測定対象面積)
-    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
-    float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
+    // 体温Tobj = 基準温度 + センサ温度差値 - 温度利得 ÷ 距離
+    float Tobj = TempOffset + (Tsen - Tenv) - TempWeight / (Dist + DistOffset);
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     temp_sum += Tobj;                           // 変数temp_sumに体温を加算
     temp_count++;                               // 測定済サンプル数に1を加算
     float temp_avr = temp_sum / (float)temp_count;  // 体温の平均値を算出
-    
+
     if(temp_count % 5 == 0){
-        M5.Lcd.setCursor(0,lcd_row * 8);        // 液晶描画位置をlcd_row行目に
-        M5.Lcd.printf("ToF=%.0fcm ",Dist/10);   // 測距結果を表示
-        M5.Lcd.printf("Te=%.1f ",Tenv);         // 環境温度を表示
-        M5.Lcd.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
-        M5.Lcd.printf("To=%.1f ",Tobj);         // 物体温度を表示
-        M5.Lcd.printf("Tavr=%.1f ",temp_avr);   // 平均温度を表示
-        analogMeterNeedle(temp_avr);            // 温度値をメータ表示
-        lcd_row++;                              // 行数に1を加算する
-        if(lcd_row > 29) lcd_row = 22;          // 最下行まで来たら先頭行へ
-        M5.Lcd.fillRect(0,lcd_row * 8,320,8,0); // 描画位置の文字を消去(0=黒)
+        Serial.printf("ToF=%.0fcm ",Dist/10);   // 測距結果を表示
+        Serial.printf("Te=%.1f ",Tenv);         // 環境温度を表示
+        Serial.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
+        Serial.printf("To=%.1f ",Tobj);         // 物体温度を表示
+        Serial.printf("Tavr=%.1f\n",temp_avr);  // 平均温度を表示
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
         digitalWrite(LED_GREEN_PIN, LOW);       // LED緑を消灯
         beep(1047);                             // 1047Hzのビープ音(測定中)

@@ -48,24 +48,25 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
-#define LED_RED_PIN   18                        // 赤色LEDのIOポート番号
-#define LED_GREEN_PIN 19                        // 緑色LEDのIOポート番号
+#define LED_RED_PIN   16                        // 赤色LEDのIOポート番号
+#define LED_GREEN_PIN 17                        // 緑色LEDのIOポート番号
+#define VOL 3                                   // スピーカ用の音量(0～10)
 
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.5;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
-int pir_prev = 0;                               // 人体検知状態の前回値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
 
 void beep(int freq = 880, int t = 100){         // ビープ音を鳴らす関数
-    M5.Lcd.invertDisplay(false);                // 画面を反転
     M5.Speaker.begin();                         // M5Stack用スピーカの起動
-    M5.Speaker.tone(freq);                      // スピーカ出力 freq Hzの音を出力
-    delay(t);                                   // 0.1秒(100ms)の待ち時間処理
+    for(int vol = VOL; vol > 0; vol--){         // 繰り返し処理(6回)
+        M5.Speaker.setVolume(vol);              // スピーカの音量を設定
+        M5.Speaker.tone(freq);                  // スピーカ出力freq Hzの音を出力
+        delay(t / VOL);                         // 0.01秒(10ms)の待ち時間処理
+    }
     M5.Speaker.end();                           // スピーカ出力を停止する
-    M5.Lcd.invertDisplay(true);                 // 画面の反転を戻す
 }
 
 void beep_chime(){                              // チャイム音を鳴らす関数
@@ -89,12 +90,10 @@ void setup(){                                   // 起動時に一度だけ実�
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    delay(1);                                   // 1msの待ち時間処理
     float Dist = (float)VL53L0X_get();          // 測距センサVL53L0Xから距離取得
     if(Dist <= 20.) return;                     // 20mm以下の時に再測定
     if(Dist > 400){                             // 400mm超のとき
-        digitalWrite(LED_GREEN_PIN, !digitalRead(LED_RED_PIN)); // 赤色LEDの反転
-        temp_sum = 0;                           // 体温の合計値を0にリセット
+        temp_sum = 0.0;                         // 体温の合計値を0にリセット
         temp_count = 0;                         // 測定サンプル数を0にリセット
         return;                                 // 測定処理を中断
     }
@@ -108,6 +107,7 @@ void loop(){                                    // 繰り返し実行する関�
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
     temp_sum += Tobj;                           // 変数temp_sumに体温を加算
     temp_count++;                               // 測定済サンプル数に1を加算
+    float temp_avr = temp_sum / (float)temp_count;  // 体温の平均値を算出
     
     if(temp_count % 5 == 0){
         M5.Lcd.setCursor(0,lcd_row * 8);        // 液晶描画位置をlcd_row行目に
@@ -115,30 +115,30 @@ void loop(){                                    // 繰り返し実行する関�
         M5.Lcd.printf("Te=%.1f ",Tenv);         // 環境温度を表示
         M5.Lcd.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
         M5.Lcd.printf("To=%.1f ",Tobj);         // 物体温度を表示
-        analogMeterNeedle(Tobj);                // 温度値をメータ表示
+        M5.Lcd.printf("Tavr=%.1f ",temp_avr);   // 平均温度を表示
+        analogMeterNeedle(temp_avr);            // 温度値をメータ表示
         lcd_row++;                              // 行数に1を加算する
         if(lcd_row > 29) lcd_row = 22;          // 最下行まで来たら先頭行へ
         M5.Lcd.fillRect(0,lcd_row * 8,320,8,0); // 描画位置の文字を消去(0=黒)
-        digitalWrite(LED_GREEN_PIN, !digitalRead(LED_GREEN_PIN)); // LED緑を点滅
+        digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
+        digitalWrite(LED_GREEN_PIN, LOW);       // LED緑を消灯
         beep(1047);                             // 1047Hzのビープ音(測定中)
     }
+    if(temp_count % 20 != 0) return;            // 10の剰余が0以外のときに先頭へ
     
-    float temp_avr = temp_sum / (float)temp_count;  // 体温の平均値を算出
-    if((pir_prev == 1 || temp_count < 10) && temp_count < 50) return;
-    
-    // 実行要件(以下のどちらかを満たした時)
-    //  pir_prev かつ temp_count が 10 以上のとき 
-    //  または temp_count が 50 以上のとき
-    if(temp_avr >= 37.5){                       // 37.5℃以上のとき
+    if(temp_avr >= 37.5){                       // 37.5℃以上のとき(発熱検知)
         digitalWrite(LED_RED_PIN, HIGH);        // LED赤を点灯
+        digitalWrite(LED_GREEN_PIN, LOW);       // LED緑を消灯
         beep_alert(3);                          // アラート音を3回、鳴らす
-    }else if(temp_avr >= 35.0){                 // 35.0℃以上の時
+    }else if(temp_avr < 35.0){                  // 35.0℃未満のとき(再測定)
+        temp_sum = Tobj;                        // 最後の測定結果のみを代入
+        temp_count = 1;                         // 測定済サンプル数を1に
+    }else{
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
-        if(temp_count >= 50){                   // 測定が完了した時
-            beep_chime();                       // ピンポン音を鳴らす
-            delay(5000);                        // 5秒間、待機する
-        }
+        digitalWrite(LED_GREEN_PIN, HIGH);      // LED緑を点灯
+        beep_chime();                           // ピンポン音を鳴らす
+        temp_sum = 0.0;                         // 体温の合計値を0にリセット
+        temp_count = 0;                         // 測定サンプル数を0にリセット
+        delay(3000);                            // 5秒間、待機する
     }
-    temp_sum = Tobj;                            // 最後の測定結果のみを代入
-    temp_count = 1;                             // 測定済サンプル数を1に
 }
