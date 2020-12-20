@@ -46,14 +46,8 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.5;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
-int pir_prev = 0;                               // 人体検知状態の前回値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
-
-/* スピーカ出力用 LEDC */
-#define LEDC_CHANNEL_0     0    // use first channel of 16 channels (started from zero)
-#define LEDC_TIMER_13_BIT  13   // use 13 bit precission for LEDC timer
-#define LEDC_BASE_FREQ     5000 // use 5000 Hz as a LEDC base frequency
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     Serial.begin(115200);                       // シリアル通信速度を設定する
