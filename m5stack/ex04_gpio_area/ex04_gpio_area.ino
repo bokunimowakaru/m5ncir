@@ -63,8 +63,8 @@ int temp_count = 0;                             // temp_sumの測定済サンプ
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    pinMode(LED_RED_PIN, OUTPUT);               // GPIO 18 を赤色LED用に設定
-    pinMode(LED_GREEN_PIN, OUTPUT);             // GPIO 19 を緑色LED用に設定
+    pinMode(LED_RED_PIN, OUTPUT);               // GPIO 16 を赤色LED用に設定
+    pinMode(LED_GREEN_PIN, OUTPUT);             // GPIO 17 を緑色LED用に設定
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
     analogMeterInit("degC","Face Area",30,40);  // メータのレンジおよび表示設定

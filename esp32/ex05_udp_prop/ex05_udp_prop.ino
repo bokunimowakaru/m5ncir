@@ -49,7 +49,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.5;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
-int pir_prev = 0;                               // 人体検知状態の前回値
+int pir_prev = 0;                               // 人体検知状態の前回の値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
 IPAddress IP_BROAD;                             // ブロードキャストIPアドレス

@@ -55,8 +55,8 @@ int temp_count = 0;                             // temp_sumの測定済サンプ
 void setup(){                                   // 起動時に一度だけ実行する関数
     Serial.begin(115200);                       // シリアル通信速度を設定する
     beepSetup(BUZZER_PIN);                      // ブザー用するPWM制御部の初期化
-    pinMode(LED_RED_PIN, OUTPUT);               // GPIO 18 を赤色LED用に設定
-    pinMode(LED_GREEN_PIN, OUTPUT);             // GPIO 19 を緑色LED用に設定
+    pinMode(LED_RED_PIN, OUTPUT);               // GPIO 16 を赤色LED用に設定
+    pinMode(LED_GREEN_PIN, OUTPUT);             // GPIO 17 を緑色LED用に設定
     Wire.begin();                               // I2Cを初期化
     Serial.println("Example 04: Body Temperature Checker [ToF][LED]");
 }

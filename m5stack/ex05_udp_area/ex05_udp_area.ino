@@ -62,7 +62,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
-int pir_prev = 0;                               // 人体検知状態の前回値
+int pir_prev = 0;                               // 人体検知状態の前回の値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
 IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
