@@ -74,9 +74,11 @@ void loop(){                                    // 繰り返し実行する関�
         pir_prev = 1;                           // 人感センサ検知状態に設定
     }else if(cDist <= 100. && ping_prev == 0){  // 100mm以下のとき
         digitalWrite(LED_RED_PIN, HIGH);        // LED赤を点灯
+        beep(1109, 600);                        // 1109Hz(ピーン)音を鳴らす
         ping_prev = 1;                          // 非接触ボタンを押下状態に設定
     }else if(cDist >= 150. && ping_prev == 1){  // 150mm以上のとき
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
+        beep(880, 600);                         // 880(ポン)音を鳴らす
         ping_prev = 0;                          // 非接触ボタンを開放状態に設定
     }
 
