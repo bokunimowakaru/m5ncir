@@ -5,8 +5,8 @@ echo "書き換えた SSID と PASS を修正する場合は、resetで戻して
 echo "                                             Copyright (c) 2016-2021 Wataru KUNINO"
 echo "################################################################################"
 #         1234567890123 456789012 3
-SSID_old="#define SSID \"1234ABCD\"                     // 無線LANアクセスポイントのSSID"
-PASS_old="#define PASS \"password\"                     // パスワード"
+SSID_old="#define SSID \"iot-core-esp32\"                   // 無線LANアクセスポイントのSSID"
+PASS_old="#define PASS \"password\"                         // パスワード"
 
 echo -n "「yes」を入力するとSSIDとPASSを書き換えます。(yes/no/reset) ? "
 read yes
