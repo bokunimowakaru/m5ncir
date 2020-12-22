@@ -45,6 +45,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define DEVICE "pir_s_5,"                       // デバイス名(5字+"_"+番号+",")
+#define BUZZER_PIN    25                        // IO 25にスピーカを接続
 
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.5;                        // 温度(加算)補正係数
@@ -73,6 +74,7 @@ void sendUdp_Pir(int pir, float temp){
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     Serial.begin(115200);                       // シリアル通信速度を設定する
+    beepSetup(BUZZER_PIN);                      // ブザー用するPWM制御部の初期化
     Wire.begin();                               // I2Cを初期化
     Serial.println("Example 05: Body Temperature Checker [ToF][UDP]");
     delay(500);                                 // 電源安定待ち時間処理0.5秒

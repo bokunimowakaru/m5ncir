@@ -98,20 +98,20 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
 
-    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
+    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;
     float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
     float cSsen = Sobj * pow((36. - Tenv - TempOfsAra) / (Tsen - Tenv), 2.);
-    float cDist = sqrt(cSsen / PI) / tan(FOV / 360. * PI);
+    Dist = sqrt(cSsen / PI) / tan(FOV / 360. * PI);
 
-    if(cDist > 400){                            // 400mm超のとき
+    if(Dist > 400){                             // 400mm超のとき
         if(pir_prev == 1) sendUdp_Pir(0);       // 検知中ならPIR=OFFをUDP送信
         if(ping_prev == 1) sendUdp_PingPong(0); // 押下中ならPongをUDP送信
     }else if(pir_prev == 0){                    // 人感センサ非検知状態のとき
         sendUdp_Pir(1);                         // PIR=ON(1)をUDP送信
         beep_alert(1);                          // 検知音を鳴らす
-    }else if(cDist <= 100. && ping_prev == 0){  // 100mm以下のとき
+    }else if(Dist <= 100. && ping_prev == 0){   // 100mm以下のとき
         sendUdp_PingPong(1);                    // PingをUDP送信する
-    }else if(cDist >= 150. && ping_prev == 1){  // 150mm以上のとき
+    }else if(Dist >= 150. && ping_prev == 1){   // 150mm以上のとき
         sendUdp_PingPong(0);                    // PongをUDP送信する
     }
 
@@ -119,8 +119,8 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.printf("Tenv=%.1f ",Tenv);           // 環境温度を表示
     M5.Lcd.printf("Tsen=%.1f ",Tsen);           // 測定温度を表示
     M5.Lcd.printf("Tobj=%.1f ",Tobj);           // 物体温度を表示
-    M5.Lcd.printf("Face=%.0f cm ",cDist / 10);  // 物体(逆算)距離を表示
-    analogMeterNeedle(cDist / 10);              // 物体(逆算)距離をメータ表示
+    M5.Lcd.printf("Dist=%.0f cm ",Dist / 10);   // 物体(逆算)距離を表示
+    analogMeterNeedle(Dist / 10);               // 物体(逆算)距離をメータ表示
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
     M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)

@@ -40,7 +40,6 @@ float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時�
 int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
 int pir_prev = 0;                               // 人体検知状態の前回の値
 int ping_prev = 0;                              // 非接触ボタン状態の前回の値
-IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -58,12 +57,12 @@ void loop(){                                    // 繰り返し実行する関�
     float Tsen= getTemp();                      // センサの測定温度を取得
     if(Tenv < -20. || Tsen < -20.) return;      // -20℃未満のときは中断
 
-    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
+    float Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;
     float Tobj = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
     float cSsen = Sobj * pow((36. - Tenv - TempOfsAra) / (Tsen - Tenv), 2.);
-    float cDist = sqrt(cSsen / PI) / tan(FOV / 360. * PI);
+    Dist = sqrt(cSsen / PI) / tan(FOV / 360. * PI);
 
-    if(cDist > 400){                            // 400mm超のとき
+    if(Dist > 400){                             // 400mm超のとき
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
         digitalWrite(LED_GREEN_PIN, LOW);       // LED緑を消灯
         pir_prev = 0;                           // 人感センサ非検知状態に設定
@@ -72,11 +71,11 @@ void loop(){                                    // 繰り返し実行する関�
         digitalWrite(LED_GREEN_PIN, HIGH);      // LED緑を点灯
         beep_alert(1);                          // 検知音を鳴らす
         pir_prev = 1;                           // 人感センサ検知状態に設定
-    }else if(cDist <= 100. && ping_prev == 0){  // 100mm以下のとき
+    }else if(Dist <= 100. && ping_prev == 0){   // 100mm以下のとき
         digitalWrite(LED_RED_PIN, HIGH);        // LED赤を点灯
         beep(1109, 600);                        // 1109Hz(ピーン)音を鳴らす
         ping_prev = 1;                          // 非接触ボタンを押下状態に設定
-    }else if(cDist >= 150. && ping_prev == 1){  // 150mm以上のとき
+    }else if(Dist >= 150. && ping_prev == 1){   // 150mm以上のとき
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
         beep(880, 600);                         // 880(ポン)音を鳴らす
         ping_prev = 0;                          // 非接触ボタンを開放状態に設定
@@ -86,8 +85,8 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.printf("Tenv=%.1f ",Tenv);           // 環境温度を表示
     M5.Lcd.printf("Tsen=%.1f ",Tsen);           // 測定温度を表示
     M5.Lcd.printf("Tobj=%.1f ",Tobj);           // 物体温度を表示
-    M5.Lcd.printf("Face=%.0f cm ",cDist / 10);  // 物体(逆算)距離を表示
-    analogMeterNeedle(cDist / 10);              // 物体(逆算)距離をメータ表示
+    M5.Lcd.printf("Dist=%.0f cm ",Dist / 10);   // 物体(逆算)距離を表示
+    analogMeterNeedle(Dist / 10);               // 物体(逆算)距離をメータ表示
     lcd_row++;                                  // 行数に1を加算する
     if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
     M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
