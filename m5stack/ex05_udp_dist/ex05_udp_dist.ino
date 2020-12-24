@@ -53,7 +53,7 @@ void sendUdp(String dev, String S){
     udp.println(dev + S);                       // 変数devとSを結合してUDP送信
     udp.endPacket();                            // UDP送信の終了(実際に送信する)
     Serial.println("udp://" + IP_BROAD.toString() + ":" + PORT + " " + dev + S);
-    M5.Lcd.println("UDP:" + S + " ");           // LCDに送信内容を表示
+    M5.Lcd.print(S);                            // LCDに送信内容を表示
     delay(100);                                 // 送信待ち時間
 }
 

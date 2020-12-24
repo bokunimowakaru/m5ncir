@@ -2,7 +2,7 @@
 Example 05: NCIR MLX90614 & TOF Human Body Temperature Checker
 
 ・距離センサが人体を検出すると、測定を開始します。
-・測定が完了したときに37.5℃以上だった場合、警告音を鳴らします。
+・37.5℃以上だった場合、警告音を鳴らします。
 ・35.0～37.5℃だった場合、ピンポン音を鳴らします。
 ・LAN内にUDPブロードキャストで通知します。
 
@@ -15,6 +15,20 @@ Example 05: NCIR MLX90614 & TOF Human Body Temperature Checker
 　STMicroelectronics VL53L0X; Time-of-Flight ranging sensor
 
                                           Copyright (c) 2020-2021 Wataru KUNINO
+********************************************************************************
+・Raspberry Piでの受信例：
+    $ cd
+    $ git clone https://bokunimo.net/git/m5ncir.git
+    $ cd m5ncir/tools
+    $ ./udp_logger.py
+    UDP Logger (usage: ./udp_logger.py port)
+    Listening UDP port 1024 ...
+    2020/12/24 21:36, 192.168.1.15, pir_s_5,1, 0, 33.6      (1)検知
+    2020/12/24 21:36, 192.168.1.15, pir_s_5,1, 1, 34.8      (2)測定中
+    2020/12/24 21:36, 192.168.1.15, pir_s_5,1, 1, 36.0
+    2020/12/24 21:36, 192.168.1.15, pir_s_5,1, 1, 36.3
+    2020/12/24 21:36, 192.168.1.15, pir_s_5,1, 1, 36.5
+    2020/12/24 21:36, 192.168.1.15, pir_s_5,0, 1, 36.5      (3)測定完了
 ********************************************************************************
 【ご注意】本ソフトウェアはセンサを使った学習用・実験用のサンプルプログラムです。
 ・本ソフトウェアで測定、表示する値は体温の目安値です。
@@ -98,11 +112,10 @@ void loop(){                                    // 繰り返し実行する関�
         if(pir_prev == 1 && temp_count > 0){    // 人体検知中で測定値がある時
             sendUdp_Pir(0,temp_sum/(float)temp_count); // 体温の平均値をUDP送信
         }
-        temp_sum = 0;                           // 体温の合計値を0にリセット
+        temp_sum = 0.0;                         // 体温の合計値を0にリセット
         temp_count = 0;                         // 測定サンプル数を0にリセット
         return;                                 // 測定処理を中断
     }
-    if(temp_count == 0) beep_chime();           // チャイム音
     
     float Tenv= getTemp(6);                     // センサの環境温度を取得
     float Tsen= getTemp();                      // センサの測定温度を取得
@@ -122,17 +135,18 @@ void loop(){                                    // 繰り返し実行する関�
         Serial.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
         Serial.printf("To=%.1f ",Tobj);         // 物体温度を表示
         Serial.printf("Tavr=%.1f\n",temp_avr);  // 平均温度を表示
+        sendUdp_Pir(1, temp_avr);               // 体温の平均値をUDP送信
+        beep(1047);                             // 1047Hzのビープ音(測定中)
     }
     if(temp_count % 20 != 0) return;            // 剰余が0以外のときに先頭へ
     
-    sendUdp_Pir(1, temp_avr);                   // 体温の平均値をUDP送信
-    beep(1047);                                 // 1047Hzのビープ音(測定中)
     if(temp_avr >= 37.5){                       // 37.5℃以上のとき(発熱検知)
         beep_alert(3);                          // アラート音を3回、鳴らす
     }else if(temp_avr < 35.0){                  // 35.0℃未満のとき(再測定)
         temp_sum = Tobj;                        // 最後の測定結果のみを代入
         temp_count = 1;                         // 測定済サンプル数を1に
     }else{
+        sendUdp_Pir(0, temp_avr);               // 体温の平均値をUDP送信
         beep_chime();                           // ピンポン音を鳴らす
         temp_sum = 0.0;                         // 体温の合計値を0にリセット
         temp_count = 0;                         // 測定サンプル数を0にリセット
