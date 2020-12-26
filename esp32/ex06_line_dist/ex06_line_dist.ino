@@ -67,7 +67,7 @@ void send(String S){                            // HTTPS通信でLINEへ送信�
     http.addHeader("Content-Type","application/x-www-form-urlencoded");
     http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
     int i = http.POST("message=" + S);          // メッセージをLINEへ送信する
-    if(i != 200) M5.Lcd.printf("E(%d) ",i);     // エラー発生時にコードを表示
+    if(i != 200) Serial.printf("E(%d)\n",i);    // エラー発生時にコードを表示
 }
 
 void pir(int in, float dist = 0){

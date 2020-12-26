@@ -89,8 +89,8 @@ void send(int pir, float temp, String stat){    // HTTPS通信でLINEへ送信�
     http.addHeader("Content-Type","application/x-www-form-urlencoded");
     http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
     int i = http.POST("message=" + S);          // メッセージをLINEへ送信する
-    if(i == 200) M5.Lcd.print(temp, 1);         // 送信した温度値を表示
-    else M5.Lcd.printf("E(%d) ",i);             // エラー表示
+    if(i == 200) Serial.println(temp, 1);       // 送信した温度値を表示
+    else Serial.printf("E(%d)\n",i);            // エラー表示
     PIR_prev = pir;                             // 人体検知状態を更新
 }
 

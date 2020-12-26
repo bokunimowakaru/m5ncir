@@ -26,6 +26,9 @@ M5Stack Arduino Library API 情報：
 NCIRセンサ MLX90614 (Melexis製)
     https://www.melexis.com/en/product/MLX90614/
     MLX90614xAA (5V仕様：x=A, 3V仕様：x=B) h=4.1mm 90°
+
+IoTデータ可視化サービスAmbient(アンビエントデーター社)
+    https://ambidata.io/
 *******************************************************************************/
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
