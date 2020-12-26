@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 06: NCIR MLX90614 Human Face Distance Meter
+Example 07: NCIR MLX90614 Human Face Distance Meter
 
 ・非接触温度センサ の読み値から顔までの距離を求めます(測距センサ不要)。
 ・距離が40cm以下になった時に、検出音を鳴らします。
@@ -90,7 +90,7 @@ void setup(){                                   // 起動時に一度だけ実�
     Serial.begin(115200);                       // シリアル通信速度を設定する
     beepSetup(BUZZER_PIN);                      // ブザー用するPWM制御部の初期化
     Wire.begin();                               // I2Cを初期化
-    Serial.print("Example 06: Distance Meter [Ambient]"); // タイトル表示
+    Serial.print("Example 07: Distance Meter [Ambient]"); // タイトル表示
     delay(500);                                 // 電源安定待ち時間処理0.5秒
     WiFi.mode(WIFI_STA);                        // 無線LANを【子機】モードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続

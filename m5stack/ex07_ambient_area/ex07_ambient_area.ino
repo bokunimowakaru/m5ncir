@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 06: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
+Example 07: NCIR MLX90614 & TOF Human Body Temperature Checker for M5Stack
 
 ・距離センサが人体を検出すると、測定を開始します。
 ・37.5℃以上だった場合、警告音を鳴らします。

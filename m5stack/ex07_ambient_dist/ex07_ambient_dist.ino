@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 06: NCIR MLX90614 Human Face Distance Meter for M5Stack
+Example 07: NCIR MLX90614 Human Face Distance Meter for M5Stack
 
 ・非接触温度センサ の読み値から顔までの距離を求めます(測距センサ不要)。
 ・距離が40cm以下になった時に、検出音を鳴らします。
@@ -100,7 +100,7 @@ void setup(){                                   // 起動時に一度だけ実�
     Wire.begin();                               // I2Cを初期化
     M5.Lcd.setBrightness(100);                  // LCDの輝度を100に設定
     analogMeterInit("cm","Face Dist", 0, 40);   // メータのレンジおよび表示設定
-    M5.Lcd.print("Example 06: Distance Meter [Ambient]"); // タイトル表示
+    M5.Lcd.print("Example 07: Distance Meter [Ambient]"); // タイトル表示
     delay(500);                                 // 電源安定待ち時間処理0.5秒
     WiFi.mode(WIFI_STA);                        // 無線LANを【子機】モードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
