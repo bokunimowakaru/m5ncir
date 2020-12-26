@@ -4,6 +4,7 @@ Example 05: NCIR MLX90614 Human Face Distance Meter
 ・非接触温度センサ の読み値から顔までの距離を求めます(測距センサ不要)。
 ・距離が40cm以下になった時に、検出音を鳴らし、LED緑を点灯します。
 ・手のひらなどをセンサに近づけた時に、ピンポン音を鳴らし、LED赤を点灯します。
+　（屋外などで掌が冷えているときは検知できません）
 
 ・対応する非接触温度センサ：
 　M5Stack NCIR Non-Contact Infrared Thermometer Sensor Unit
