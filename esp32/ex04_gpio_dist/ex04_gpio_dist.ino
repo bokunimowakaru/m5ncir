@@ -30,8 +30,8 @@ NCIRセンサ MLX90614 (Melexis製)
 float Dist = 200;                               // 測定対象までの距離(mm)
 float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
-int pir_prev = 0;                               // 人体検知状態の前回の値
-int ping_prev = 0;                              // 非接触ボタン状態の前回の値
+int PIR_prev = 0;                               // 人体検知状態の前回の値
+int PING_prev = 0;                              // 非接触ボタン状態の前回の値
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     Serial.begin(115200);                       // シリアル通信速度を設定する
@@ -56,20 +56,20 @@ void loop(){                                    // 繰り返し実行する関�
     if(Dist > 400){                             // 400mm超のとき
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
         digitalWrite(LED_GREEN_PIN, LOW);       // LED緑を消灯
-        pir_prev = 0;                           // 人感センサ非検知状態に設定
-        ping_prev = 0;                          // 非接触ボタンを開放状態に設定
-    }else if(pir_prev == 0){                    // 人感センサ非検知状態のとき
+        PIR_prev = 0;                           // 人感センサ非検知状態に設定
+        PING_prev = 0;                          // 非接触ボタンを開放状態に設定
+    }else if(PIR_prev == 0){                    // 人感センサ非検知状態のとき
         digitalWrite(LED_GREEN_PIN, HIGH);      // LED緑を点灯
         beep_alert(1);                          // 検知音を鳴らす
-        pir_prev = 1;                           // 人感センサ検知状態に設定
-    }else if(Dist <= 100. && ping_prev == 0){   // 100mm以下のとき
+        PIR_prev = 1;                           // 人感センサ検知状態に設定
+    }else if(Dist <= 100. && PING_prev == 0){   // 100mm以下のとき
         digitalWrite(LED_RED_PIN, HIGH);        // LED赤を点灯
         beep(1109, 600);                        // 1109Hz(ピーン)音を鳴らす
-        ping_prev = 1;                          // 非接触ボタンを押下状態に設定
-    }else if(Dist >= 150. && ping_prev == 1){   // 150mm以上のとき
+        PING_prev = 1;                          // 非接触ボタンを押下状態に設定
+    }else if(Dist >= 150. && PING_prev == 1){   // 150mm以上のとき
         digitalWrite(LED_RED_PIN, LOW);         // LED赤を消灯
         beep(880, 600);                         // 880(ポン)音を鳴らす
-        ping_prev = 0;                          // 非接触ボタンを開放状態に設定
+        PING_prev = 0;                          // 非接触ボタンを開放状態に設定
     }
 
     Serial.printf("Tenv=%.1f ",Tenv);           // 環境温度を表示

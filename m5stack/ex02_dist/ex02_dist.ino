@@ -35,7 +35,7 @@ NCIRセンサ MLX90614 (Melexis製)
 float Dist = 200;                               // 測定対象までの距離(mm)
 float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
-int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
+int LCD_row = 22;                               // 液晶画面上の行数保持用の変数
 
 float getTemp(byte reg = 0x7){
     int16_t val = 0xFFFF;                       // 変数valを定義
@@ -77,13 +77,13 @@ void loop(){                                    // 繰り返し実行する関�
 //  Serial.printf("Tobj=%.2f(%.0fcm2), ",Tobj, Sobj / 100); // 物体温度を出力
 //  Serial.printf("Dist=%.2f\n",Dist / 10);     // 物体(逆算)距離を出力
 
-    M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
+    M5.Lcd.setCursor(0,LCD_row * 8);            // 液晶描画位置をLCD_row行目に
     M5.Lcd.printf("Tenv=%.1f ",Tenv);                       // 環境温度を表示
     M5.Lcd.printf("Tsen=%.1f ",Tsen);           // 測定温度を表示
     M5.Lcd.printf("Tobj=%.1f ",Tobj);           // 物体温度を表示
     M5.Lcd.printf("Dist=%.0f cm ",Dist / 10);   // 物体(逆算)距離を表示
     analogMeterNeedle(Dist / 10);               // 物体(逆算)距離をメータ表示
-    lcd_row++;                                  // 行数に1を加算する
-    if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    LCD_row++;                                  // 行数に1を加算する
+    if(LCD_row > 29) LCD_row = 22;              // 最下行まで来たら先頭行へ
+    M5.Lcd.fillRect(0, LCD_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }

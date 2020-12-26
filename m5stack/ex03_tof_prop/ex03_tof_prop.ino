@@ -49,7 +49,7 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 float TempWeight = 1110.73;                     // 温度(利得)補正係数
 float TempOffset = 36.5;                        // 温度(加算)補正係数
 float DistOffset = 29.4771;                     // 距離補正係数
-int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
+int LCD_row = 22;                               // 液晶画面上の行数保持用の変数
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -76,13 +76,13 @@ void loop(){                                    // 繰り返し実行する関�
 //  Serial.printf("To=%.2f\n",Tobj);            // 物体温度を出力
     if(Tobj < 0. || Tobj > 99.) return;         // 0℃未満/99℃超過時は戻る
 
-    M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
+    M5.Lcd.setCursor(0,LCD_row * 8);            // 液晶描画位置をLCD_row行目に
     M5.Lcd.printf("ToF=%.0fcm ",Dist/10);       // 測距結果を表示
     M5.Lcd.printf("Te=%.1f ",Tenv);             // 環境温度を表示
     M5.Lcd.printf("Ts=%.1f ",Tsen);             // 測定温度を表示
     M5.Lcd.printf("To=%.1f ",Tobj);             // 物体温度を表示
     analogMeterNeedle(Tobj);                    // 温度値をメータ表示
-    lcd_row++;                                  // 行数に1を加算する
-    if(lcd_row > 29) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    LCD_row++;                                  // 行数に1を加算する
+    if(LCD_row > 29) LCD_row = 22;              // 最下行まで来たら先頭行へ
+    M5.Lcd.fillRect(0, LCD_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }

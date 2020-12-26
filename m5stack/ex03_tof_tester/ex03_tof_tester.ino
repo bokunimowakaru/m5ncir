@@ -65,7 +65,7 @@ float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時�
 float DistOffset = 29.4771;                     // 距離補正係数
 char csvfile[10] = "/ncir.csv";
 char bmpfile[10] = "/ncir.bmp";
-int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
+int LCD_row = 22;                               // 液晶画面上の行数保持用の変数
 enum Mode {Area=1, Prop=2, NCIR=3, TOF=4, Chrt=5, None=0} mode = Area;
 // モード 1:体温(面積換算) 2:体温(係数換算) 3:NICRセンサ値 4:TOFセンサ値 5:グラフ
 
@@ -79,12 +79,12 @@ void printMenu(){
     M5.Lcd.printf("    +");
     M5.Lcd.setCursor(188, 224, 2);
     M5.Lcd.printf("[%2.1f]",TempOffset);
-    M5.Lcd.setCursor(0, 22 * 8, 1);             // 液晶描画位置をlcd_row行目に
+    M5.Lcd.setCursor(0, 22 * 8, 1);             // 液晶描画位置をLCD_row行目に
 }
 
 void printTitle(){
     M5.Lcd.fillRect(0, 21 * 8, 320, 8, 0);      // 描画位置の文字を消去(0=黒)
-    M5.Lcd.setCursor(0, 21 * 8, 1);             // 液晶描画位置をlcd_row行目に
+    M5.Lcd.setCursor(0, 21 * 8, 1);             // 液晶描画位置をLCD_row行目に
     M5.Lcd.print("Example 03: Body Temperature Meter [ToF][Graph]");
     printMenu();
 }
@@ -252,7 +252,7 @@ void loop(){                                    // 繰り返し実行する関�
             }
             return;
     }
-    M5.Lcd.setCursor(0,lcd_row * 8);            // 液晶描画位置をlcd_row行目に
+    M5.Lcd.setCursor(0,LCD_row * 8);            // 液晶描画位置をLCD_row行目に
     if(mode != NCIR) M5.Lcd.printf("ToF=%.0fcm ",Dist/10);      // 測距結果を表示
     if(mode != TOF)  M5.Lcd.printf("Te=%.1f ",Tenv);            // 環境温度を表示
     if(mode == Area){
@@ -262,7 +262,7 @@ void loop(){                                    // 繰り返し実行する関�
         if(mode != TOF) M5.Lcd.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
         if(mode == Prop)M5.Lcd.printf("To=%.1f ",TobjPrp);      // 物体温度を表示
     }
-    lcd_row++;                                  // 行数に1を加算する
-    if(lcd_row > 27) lcd_row = 22;              // 最下行まで来たら先頭行へ
-    M5.Lcd.fillRect(0, lcd_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
+    LCD_row++;                                  // 行数に1を加算する
+    if(LCD_row > 27) LCD_row = 22;              // 最下行まで来たら先頭行へ
+    M5.Lcd.fillRect(0, LCD_row * 8, 320, 8, 0); // 描画位置の文字を消去(0=黒)
 }

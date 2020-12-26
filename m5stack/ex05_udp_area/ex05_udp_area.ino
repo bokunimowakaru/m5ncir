@@ -75,8 +75,8 @@ TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
 
 float Sobj = 100. * 70. * PI;                   // 測定対象の面積(mm2)
 float TempOfsAra = (273.15 + 36) * 0.02;        // 皮膚からの熱放射時の減衰
-int lcd_row = 22;                               // 液晶画面上の行数保持用の変数
-int pir_prev = 0;                               // 人体検知状態の前回の値
+int LCD_row = 22;                               // 液晶画面上の行数保持用の変数
+int PIR_prev = 0;                               // 人体検知状態の前回の値
 float temp_sum = 0.0;                           // 体温値の合計(平均計算用)
 int temp_count = 0;                             // temp_sumの測定済サンプル数
 IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
@@ -93,10 +93,10 @@ void sendUdp(String dev, String S){
 
 void sendUdp_Pir(int pir, float temp){
     String S = String(pir);                     // 変数Sに人体検知状態を代入
-    S +=  ", " + String(pir_prev);              // 前回値を追加
+    S +=  ", " + String(PIR_prev);              // 前回値を追加
     S +=  ", " + String(temp, 1);               // 体温を追加
     sendUdp(DEVICE, S);                         // sendUdpを呼び出し
-    pir_prev = pir;                             // 今回の値を前回値として更新
+    PIR_prev = pir;                             // 今回の値を前回値として更新
 }
 
 void setup(){                                   // 起動時に一度だけ実行する関数
@@ -120,7 +120,7 @@ void loop(){                                    // 繰り返し実行する関�
     float Dist = (float)VL53L0X_get();          // 測距センサVL53L0Xから距離取得
     if(Dist <= 20.) return;                     // 20mm以下の時に再測定
     if(Dist > 400){                             // 400mm超のとき
-        if(pir_prev == 1 && temp_count > 0){    // 人体検知中で測定値がある時
+        if(PIR_prev == 1 && temp_count > 0){    // 人体検知中で測定値がある時
             sendUdp_Pir(0,temp_sum/(float)temp_count); // 体温の平均値をUDP送信
         }
         temp_sum = 0.0;                         // 体温の合計値を0にリセット
@@ -141,16 +141,16 @@ void loop(){                                    // 繰り返し実行する関�
     float temp_avr = temp_sum / (float)temp_count;  // 体温の平均値を算出
     
     if(temp_count % 5 == 0){
-        M5.Lcd.setCursor(0,lcd_row * 8);        // 液晶描画位置をlcd_row行目に
+        M5.Lcd.setCursor(0,LCD_row * 8);        // 液晶描画位置をLCD_row行目に
         M5.Lcd.printf("ToF=%.0fcm ",Dist/10);   // 測距結果を表示
         M5.Lcd.printf("Te=%.1f ",Tenv);         // 環境温度を表示
         M5.Lcd.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
         M5.Lcd.printf("To=%.1f ",Tobj);         // 物体温度を表示
         M5.Lcd.printf("Tavr=%.1f ",temp_avr);   // 平均温度を表示
         analogMeterNeedle(temp_avr);            // 温度値をメータ表示
-        lcd_row++;                              // 行数に1を加算する
-        if(lcd_row > 29) lcd_row = 22;          // 最下行まで来たら先頭行へ
-        M5.Lcd.fillRect(0,lcd_row * 8,320,8,0); // 描画位置の文字を消去(0=黒)
+        LCD_row++;                              // 行数に1を加算する
+        if(LCD_row > 29) LCD_row = 22;          // 最下行まで来たら先頭行へ
+        M5.Lcd.fillRect(0,LCD_row * 8,320,8,0); // 描画位置の文字を消去(0=黒)
         sendUdp_Pir(1, temp_avr);               // 体温の平均値をUDP送信
         beep(1047);                             // 1047Hzのビープ音(測定中)
     }
