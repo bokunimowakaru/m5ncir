@@ -44,12 +44,22 @@ NCIRセンサ MLX90614 (Melexis製)
 
 TOFセンサ VL53L0X (STMicroelectronics製) に関する参考文献
     https://groups.google.com/d/msg/diyrovers/lc7NUZYuJOg/ICPrYNJGBgAJ
+    
+LINE Notify API Document
+    https://notify-bot.line.me/doc/ja/
+ 
+    POST https://notify-api.line.me/api/notify
+        Method  POST
+        Content-Type    application/x-www-form-urlencoded
+        Authorization   Bearer <access_token>
+    パラメータ
+        message=String  最大 1000文字
 *******************************************************************************/
 
 #include <M5Stack.h>                            // M5Stack用ライブラリ
 #include <Wire.h>                               // I2C通信用ライブラリ
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
-#include <WiFiClientSecure.h>                   // HTTPS通信用ライブラリ
+#include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 #define SSID "iot-core-esp32"                   // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
 
@@ -82,18 +92,14 @@ int temp_count = 0;                             // temp_sumの測定済サンプ
 void send(int pir, float temp, String stat){    // HTTPS通信でLINEへ送信する
     String S = "体温は" + String(temp,1)+ "℃"; // 「体温は○○℃」を変数Sに代入
     S += "(" + stat + "), PIR=" + String(pir);  // （状態）とPIR値を変数Sに追記
-    int len = S.length() + 10;                  // コンテンツのサイズを計算
 
-    WiFiClientSecure client;                    // HTTPSクライアントを生成
-    if(!client.connect("notify-api.line.me", 443)) return;  // HTTPアクセス実行
-    client.print("POST https://notify-api.line.me/api/notify HTTP/1.0\r\n");
-    client.print("Authorization: Bearer " + String(LINE_TOKEN) + "\r\n");
-    client.print("Content-Type: application/x-www-form-urlencoded\r\n");
-    client.print("Content-Length: " + String(len) + "\r\n");
-    client.print("\r\n");                       // HTTPヘッダの区切り
-    client.print("message=" + S + "\r\n");      // LINEへ送るコンテンツ本体
-    client.print("\r\n");                       // コンテンツ本体の終了
-    client.stop();                              // HTTPS通信の終了
+    HTTPClient http;                            // HTTPリクエスト用インスタンス
+    http.begin("https://notify-api.line.me/api/notify");    // アクセス先URL
+    http.addHeader("Content-Type","application/x-www-form-urlencoded");
+    http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
+    int i = http.POST("message=" + S);          // メッセージをLINEへ送信する
+    if(i == 200) M5.Lcd.print(temp, 1);         // 送信した温度値を表示
+    else M5.Lcd.printf("E(%d) ",i);             // エラー表示
     PIR_prev = pir;                             // 人体検知状態を更新
 }
 

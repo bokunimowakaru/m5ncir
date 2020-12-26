@@ -18,11 +18,21 @@ Example 06: NCIR MLX90614 Human Face Distance Meter
 NCIRセンサ MLX90614 (Melexis製)
     https://www.melexis.com/en/product/MLX90614/
     MLX90614xAA (5V仕様：x=A, 3V仕様：x=B) h=4.1mm 90°
+
+LINE Notify API Document
+    https://notify-bot.line.me/doc/ja/
+ 
+    POST https://notify-api.line.me/api/notify
+        Method  POST
+        Content-Type    application/x-www-form-urlencoded
+        Authorization   Bearer <access_token>
+    パラメータ
+        message=String  最大 1000文字
 *******************************************************************************/
 
 #include <Wire.h>                               // I2C通信用ライブラリ
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
-#include <WiFiClientSecure.h>                   // HTTPS通信用ライブラリ
+#include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 #define SSID "iot-core-esp32"                   // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
 #define BUZZER_PIN    25                        // IO 25にスピーカを接続
@@ -52,18 +62,12 @@ int PIR_prev = 0;                               // 人体検知状態の前回�
 int PING_prev = 0;                              // 非接触ボタン状態の前回の値
 
 void send(String S){                            // HTTPS通信でLINEへ送信する
-    int len = S.length() + 10;                  // コンテンツのサイズを計算
-
-    WiFiClientSecure client;                    // HTTPSクライアントを生成
-    if(!client.connect("notify-api.line.me", 443)) return;  // HTTPアクセス実行
-    client.print("POST https://notify-api.line.me/api/notify HTTP/1.0\r\n");
-    client.print("Authorization: Bearer " + String(LINE_TOKEN) + "\r\n");
-    client.print("Content-Type: application/x-www-form-urlencoded\r\n");
-    client.print("Content-Length: " + String(len) + "\r\n");
-    client.print("\r\n");                       // HTTPヘッダの区切り
-    client.print("message=" + S + "\r\n");      // LINEへ送るコンテンツ本体
-    client.print("\r\n");                       // コンテンツ本体の終了
-    client.stop();                              // HTTPS通信の終了
+    HTTPClient http;                            // HTTPリクエスト用インスタンス
+    http.begin("https://notify-api.line.me/api/notify");    // アクセス先URL
+    http.addHeader("Content-Type","application/x-www-form-urlencoded");
+    http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
+    int i = http.POST("message=" + S);          // メッセージをLINEへ送信する
+    if(i != 200) M5.Lcd.printf("E(%d) ",i);     // エラー発生時にコードを表示
 }
 
 void pir(int in, float dist = 0){
