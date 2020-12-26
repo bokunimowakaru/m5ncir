@@ -126,7 +126,7 @@ void loop(){                                    // 繰り返し実行する関�
         Serial.printf("Te=%.1f ",Tenv);         // 環境温度を表示
         Serial.printf("Ts=%.1f ",Tsen);         // 測定温度を表示
         Serial.printf("To=%.1f ",Tobj);         // 物体温度を表示
-        Serial.printf("Tavr=%.1f ",temp_avr);   // 平均温度を表示
+        Serial.printf("Tavr=%.1f\n",temp_avr);  // 平均温度を表示
         if(!PIR_prev) send(1,temp_avr,"測定開始");      // LINEへ送信
         beep(1047);                             // 1047Hzのビープ音(測定中)
     }

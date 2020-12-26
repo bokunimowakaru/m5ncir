@@ -127,5 +127,5 @@ void loop(){                                    // 繰り返し実行する関�
     Serial.printf("Tenv=%.1f ",Tenv);           // 環境温度を表示
     Serial.printf("Tsen=%.1f ",Tsen);           // 測定温度を表示
     Serial.printf("Tobj=%.1f ",Tobj);           // 物体温度を表示
-    Serial.printf("Dist=%.0f cm ",Dist / 10);   // 物体(逆算)距離を表示
+    Serial.printf("Dist=%.0f cm\n",Dist / 10);  // 物体(逆算)距離を表示
 }
