@@ -12,6 +12,20 @@ Example 05: NCIR MLX90614 Human Face Distance Meter for M5Stack
 
                                           Copyright (c) 2020-2021 Wataru KUNINO
 ********************************************************************************
+・Raspberry Piでの受信例：
+    $ cd
+    $ git clone https://bokunimo.net/git/m5ncir.git
+    $ cd m5ncir/tools
+    $ ./udp_logger.py
+    UDP Logger (usage: ./udp_logger.py port)
+    Listening UDP port 1024 ...
+    2020/12/26 13:03, 192.168.1.14, pir_s_5,1, 0            (1)人体検知
+    2020/12/26 13:03, 192.168.1.14, pir_s_5,0, 1            (2)非検知
+    2020/12/26 13:03, 192.168.1.14, pir_s_5,1, 0            
+    2020/12/26 13:03, 192.168.1.14, Ping                    (3)ボタン検知
+    2020/12/26 13:03, 192.168.1.14, Pong                    (4)非検知
+    2020/12/26 13:03, 192.168.1.14, pir_s_5,0, 1
+********************************************************************************
 【参考文献】
 
 Arduino IDE 開発環境イントール方法：
