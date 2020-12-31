@@ -46,7 +46,6 @@ float getTemp(byte reg = 0x7){
         val = (int16_t)Wire.read();             // 1バイト目を変数tempの下位へ
         val |= ((int16_t)Wire.read()) << 8;     // 2バイト目を変数tempの上位へ
     }
-    Wire.endTransmission();                     // I2C通信の切断
     return (float)val * 0.02 - 273.15;          // 温度に変換して応答
 }
 
