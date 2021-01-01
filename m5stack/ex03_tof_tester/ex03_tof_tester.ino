@@ -4,9 +4,9 @@ Example 03: NCIR MLX90614 & TOF Human Body Temperature Meter for M5Stack
 ・非接触温度センサ の読み値を体温に変換し、アナログ・メータ表示します。
 ・測距センサを使って顔までの距離を測定し、1次変換式により体温を算出します。
 ・左ボタンで下記のモード切替、長押しでスクリーンショットをマイクロSDカードへ保存
-        1:体温(面積換算) 
-        2:体温(係数換算) 
-        3:NICRセンサ値 
+        1:体温(Area方式・面積換算) 
+        2:体温(Prop方式・係数換算) 
+        3:NCIRセンサ値 
         4:TOFセンサ値 
         5:グラフ表示（センサ値データはマイクロSDカードへ書き込む）
         長押し＝スクリーンショットをマイクロSDカードへ保存
@@ -67,7 +67,7 @@ char csvfile[10] = "/ncir.csv";
 char bmpfile[10] = "/ncir.bmp";
 int LCD_row = 22;                               // 液晶画面上の行数保持用の変数
 enum Mode {Area=1, Prop=2, NCIR=3, TOF=4, Chrt=5, None=0} mode = Area;
-// モード 1:体温(面積換算) 2:体温(係数換算) 3:NICRセンサ値 4:TOFセンサ値 5:グラフ
+// モード 1:体温(面積換算) 2:体温(係数換算) 3:NCIRセンサ値 4:TOFセンサ値 5:グラフ
 
 void printMenu(){
     M5.Lcd.fillRect(0, 224, 320, 16, BLUE);
@@ -172,7 +172,7 @@ void loop(){                                    // 繰り返し実行する関�
             analogMeterInit("degC", "Face Prop", 30, 40);   // メータのレンジおよび表示設定
             printTitle();
         }
-        if(mode == NCIR){                           // モード 3:NICRセンサ値
+        if(mode == NCIR){                           // モード 3:NCIRセンサ値
             M5.Lcd.fillScreen(BLACK);               // LCDを消去
             analogMeterInit("degC", "NCIR", 0, 40); // メータのレンジおよび表示設定
             printTitle();
@@ -204,13 +204,13 @@ void loop(){                                    // 繰り返し実行する関�
         Tsen= getTemp();                        // センサの測定温度を取得
         if(Tenv < -20. || Tsen < -20.) return;  // -20℃未満のときは中断
         
-        // 面積換算方式
+        // Area方式・面積換算
         // 体温TobjAra = 環境温度 + センサ温度差値×√(センサ測定面積÷測定対象面積)
         Ssen = pow(Dist * tan(FOV / 360. * PI), 2.) * PI;  // センサ測定面積
         Sobj = 100. * 70. * PI;           // 測定対象面積
         TobjAra = Tenv + TempOfsAra + (Tsen - Tenv) * sqrt(Ssen / Sobj);
         
-        // 係数換算方式
+        // Prop方式・係数換算
         // 体温TobjPrp = 基準温度 + センサ温度差値 - 温度利得 ÷ 距離
         TobjPrp = TempOffset + (Tsen - Tenv) - (TempWeight / (Dist + DistOffset));
     }
@@ -230,7 +230,7 @@ void loop(){                                    // 繰り返し実行する関�
             analogMeterNeedle(TobjPrp);         // 体温値をメータ表示
             break;
         case NCIR:
-            analogMeterNeedle(Tsen);            // NICR温度値をメータ表示
+            analogMeterNeedle(Tsen);            // NCIR温度値をメータ表示
             break;
         case TOF:     /* 距離メータ表示 */
             analogMeterNeedle(Dist/10);                     // 距離をメータ表示
