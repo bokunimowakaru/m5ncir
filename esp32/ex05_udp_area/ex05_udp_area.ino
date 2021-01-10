@@ -145,6 +145,9 @@ void loop(){                                    // 繰り返し実行する関�
     }else if(temp_avr < 35.0){                  // 35.0℃未満のとき(再測定)
         temp_sum = Tobj;                        // 最後の測定結果のみを代入
         temp_count = 1;                         // 測定済サンプル数を1に
+    }else if(temp_avr + .2 < Tobj || temp_avr - .2 > Tobj){ // 最新値が遠い時
+        temp_sum = Tobj;                        // 最後の測定結果のみを代入
+        temp_count = 1;                         // 測定済サンプル数を1に
     }else{
         sendUdp_Pir(0, temp_avr);               // 体温の平均値をUDP送信
         beep_chime();                           // ピンポン音を鳴らす
