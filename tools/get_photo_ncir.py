@@ -19,7 +19,6 @@ import pathlib                                          # ファイル・パス�
 import socket                                           # ソケット通信用
 import urllib.request                                   # HTTP通信ライブラリ
 import datetime                                         # 年月日・時刻管理
-import time                                             # シリアル時刻
 pir  = 0                                                # 測定中=1,測定終了=0
 temp = 0.0                                              # 温度値
 
@@ -48,7 +47,6 @@ def cam(ip, filename = 'cam.jpg'):                      # IoTカメラ
 
 print('Get Photo for Python [NCIR]')                    # タイトル表示
 pathlib.Path(SAVETO).mkdir(exist_ok=True)               # フォルダ作成
-time_start = time.time()                                # 開始時刻シリアル値保持
 
 print('Listening UDP port', PORT, '...')                # ポート番号表示
 try:
