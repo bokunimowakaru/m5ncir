@@ -9,8 +9,8 @@
 #                                          Copyright (c) 2016-2021 Wataru KUNINO
 ################################################################################
 
-DEVICE1 = 'cam_a_5'                                     # 配信デバイス名(カメラ)
-DEVICE2 = 'pir_s_5'                                     # 配信デバイス名(人感)
+DEV_CAM = 'cam_a_5'                                     # 配信デバイス名(カメラ)
+DEV_PIR = 'pir_s_5'                                     # 配信デバイス名(人感)
 SAVETO  = 'photo'                                       # 保存先フォルダ名
 IP_CAM  = None                                          # カメラのIPアドレス
 PORT    = 1024                                          # UDPポート番号を1024に
@@ -24,7 +24,7 @@ pir  = 0                                                # 測定中=1,測定終�
 temp = 0.0                                              # 温度値
 
 def cam(ip, filename = 'cam.jpg'):                      # IoTカメラ
-    filename = SAVETO + '/' + filename
+    filename = SAVETO + '/' + filename                  # フォルダ名を追加
     url_s = 'http://' + ip                              # アクセス先をurl_sへ
     s = '/cam.jpg'                                      # 文字列変数sにクエリを
     try:
@@ -78,14 +78,10 @@ while sock:                                             # 永遠に繰り返す
         continue                                        # whileの先頭に戻る
     device = s[0:7]                                     # 先頭7文字をデバイス名
     value = s.split(',')                                # CSVデータを分割
-    if device == DEVICE1:                               # カメラから受信
-        if (time.time() - time_start < 300):            # 起動後5分以内
-            IP_CAM = udp_from[0]                        # カメラIPアドレスを保持
-            print('カメラを発見しました IP_CAM =',IP_CAM)
-        elif IP_CAM != udp_from[0]:                     # アドレス不一致時
-            print('起動後5分を経過したので送信先は更新しません')
-            continue                                    # whileの先頭に戻る
-    if device == DEVICE2 and len(value) >= 4:           # 体温測定実験機から
+    if device == DEV_CAM and IP_CAM is None:            # カメラを発見したとき
+        IP_CAM = udp_from[0]                            # カメラIPアドレスを保持
+        print('カメラを発見しました IP_CAM =',IP_CAM)   # 発見を表示
+    if device == DEV_PIR and len(value) >= 4:           # 体温測定実験機から
         try:
             pir = int(value[1])                         # 測定状態を取得
             temp = float(value[3])                      # 体温を取得
@@ -112,14 +108,13 @@ while sock:                                             # 永遠に繰り返す
         log = date_s + ', '+ str(pir) + ', '+ str(temp) # ログを生成
         fp.write(log + '\n')                            # ログを出力
         fp.close()                                      # ファイルを閉じる
-sock.close()                                            # ソケットの切断
 
 '''
 $ ./get_photo_ncir.py
 Get Photo for Python [NCIR]
 Listening UDP port 1024 ...
 2021/01/24 10:56:40, 192.168.1.2, cam_a_5,0,http://192.168.1.2/cam.jpg
-カメラを発見しました IP_CAM = 192.168.1.102
+カメラを発見しました IP_CAM = 192.168.1.2
 2021/01/24 10:57:52, 192.168.1.5, pir_s_5,1,0,34.5
 pir = 1 , temp = 34.5 , saved file : photo/cam.jpg
 2021/01/24 10:57:55, 192.168.1.5, pir_s_5,1,1,36.1
