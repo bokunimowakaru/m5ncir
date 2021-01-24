@@ -81,7 +81,7 @@ while sock:                                             # 永遠に繰り返す
     if device == DEVICE1:                               # カメラから受信
         if (time.time() - time_start < 300):            # 起動後5分以内
             IP_CAM = udp_from[0]                        # カメラIPアドレスを保持
-            print('IP_CAM =',IP_CAM)                    # 表示
+            print('カメラを発見しました IP_CAM =',IP_CAM)
         elif IP_CAM != udp_from[0]:                     # アドレス不一致時
             print('起動後5分を経過したので送信先は更新しません')
             continue                                    # whileの先頭に戻る
@@ -91,7 +91,7 @@ while sock:                                             # 永遠に繰り返す
             temp = float(value[3])                      # 体温を取得
         except ValueError:                              # 数値で無かったとき
             continue                                    # whileの先頭に戻る
-        print('pir =', pir, 'temp =', temp)             # 測定状態と体温を表示
+        print('pir =', pir, ', temp =', temp, end=', ') # 測定状態と体温を表示
         if IP_CAM is not None:                          # IP_CAMがNoneでは無い時
             date_f = date.strftime('%Y%m%d-%H%M%S')     # ファイル名用の時刻書式
             if temp >= 37.5:                            # 37.5℃以上の時
@@ -102,6 +102,8 @@ while sock:                                             # 永遠に繰り返す
                 cam(IP_CAM,filename)                    # 撮影(ファイル保存)
             else:                                       # その他のとき
                 cam(IP_CAM)                             # 撮影(ファイル上書き)
+        else:                                           # カメラが無い時
+            print('no IP_CAM')                          # カメラ未登録を表示
         try:
             fp = open(SAVETO + '/log.csv', 'a')         # ログ保存用ファイル開く
         except Exception as e:                          # 例外処理発生時
@@ -111,3 +113,23 @@ while sock:                                             # 永遠に繰り返す
         fp.write(log + '\n')                            # ログを出力
         fp.close()                                      # ファイルを閉じる
 sock.close()                                            # ソケットの切断
+
+'''
+$ ./get_photo_ncir.py
+Get Photo for Python [NCIR]
+Listening UDP port 1024 ...
+2021/01/24 10:56:40, 192.168.1.2, cam_a_5,0,http://192.168.1.2/cam.jpg
+カメラを発見しました IP_CAM = 192.168.1.102
+2021/01/24 10:57:52, 192.168.1.5, pir_s_5,1,0,34.5
+pir = 1 , temp = 34.5 , saved file : photo/cam.jpg
+2021/01/24 10:57:55, 192.168.1.5, pir_s_5,1,1,36.1
+pir = 1 , temp = 36.1 , saved file : photo/cam.jpg
+2021/01/24 10:57:57, 192.168.1.5, pir_s_5,0,1,36.1
+pir = 0 , temp = 36.1,  saved file : photo/cam_20210124-105757.jpg
+2021/01/24 11:11:38, 192.168.1.5, pir_s_5,1,1,36.7
+pir = 1 , temp = 36.7, saved file : photo/cam.jpg
+2021/01/24 11:11:40, 192.168.1.5, pir_s_5,1,1,38.1
+pir = 1 , temp = 38.1, saved file : photo/cam_20210124-111140.38.1.jpg
+2021/01/24 11:11:43, 192.168.1.5, pir_s_5,0,1,38.1
+pir = 0 , temp = 38.1, saved file : photo/cam_20210124-111143.38.1.jpg
+'''
